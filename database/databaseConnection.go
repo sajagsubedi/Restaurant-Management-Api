@@ -2,24 +2,19 @@ package database
 
 import(
   "database/sql"
-  "log"
-  "github.com/joho/godotenv"
-  "github.com/"
+  "os"
+  _ "github.com/lib/pq"
 )
 func CreateConnection() *sql.DB {
-  err: = godotenv.Load(".env")
-  if err != nil {
-    log.Fatal("Error on loading .env file")
-  }
   //connect to db
-  db,err:= sql.Open("postgres", os.Getenv("POSTGRES_URL"))
+  db,err:= sql.Open("postgres", os.Getenv("POSTGRES_URI"))
 
   if err != nil {
     panic(err)
   }
 
   //checking connection
-  err = d.Ping()
+  err = db.Ping()
 
   if err != nil {
     panic(err)
