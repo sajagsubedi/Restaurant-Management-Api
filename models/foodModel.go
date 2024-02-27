@@ -45,3 +45,14 @@ func CreateFoodDB(createFood Food)(Food, error) {
   }
   return createdFood,err
 }
+func GetFoodById(id string) (Food,error){
+  db:= database.CreateConnection()
+  defer db.Close()
+  var foundFood Food
+  sqlStatement:=`SELECT * FROM foods WHERE id=$1`
+  err:=db.QueryRow(sqlStatement,id).Scan(&foundFood.ID,&foundFood.Name,&foundFood.Price,&foundFood.Food_image)
+  if err !=nil{
+    log.Fatalf("Unable to execute query %v", err)
+  }
+  return foundFood,err
+}
