@@ -85,3 +85,19 @@ func UpdateFood() gin.HandlerFunc {
     })
   }
 }
+
+func DeleteFood() gin.HandlerFunc {
+  return func(c *gin.Context) {
+    foodId:= c.Param("foodid")
+    err:= models.DeleteFoodById(foodId)
+    if err != nil {
+      c.JSON(http.StatusInternalServerError, gin.H {
+        "success": false, "msg": "Failed to delete food",
+      })
+      return
+    }
+  c.JSON(http.StatusOK, gin.H {
+    "success": true, "msg": "Delete food successfully!",
+  })
+}
+}

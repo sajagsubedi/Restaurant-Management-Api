@@ -32,6 +32,7 @@ func GetFoodsDb() ([]Food, error) {
   return foods,
   err
 }
+
 func CreateFoodDB(createFood Food)(Food, error) {
   db:= database.CreateConnection()
   defer db.Close()
@@ -45,6 +46,7 @@ func CreateFoodDB(createFood Food)(Food, error) {
   }
   return createdFood,err
 }
+
 func GetFoodById(id string) (Food,error){
   db:= database.CreateConnection()
   defer db.Close()
@@ -55,4 +57,16 @@ func GetFoodById(id string) (Food,error){
     log.Fatalf("Unable to execute query %v", err)
   }
   return foundFood,err
+}
+
+func DeleteFoodById(id string) error{
+  db:= database.CreateConnection()
+  defer db.Close()
+  sqlStatement:=`DELETE FROM foods WHERE id=$1 RETURNING id;`
+  var returnid string
+  err:=db.QueryRow(sqlStatement,id).Scan(&returnid)
+  if err !=nil{
+    log.Fatalf("Unable to execute query %v", err)
+  }
+  return err
 }
