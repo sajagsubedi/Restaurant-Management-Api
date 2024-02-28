@@ -1,6 +1,7 @@
 package models
 
 import(
+  "fmt"
   "log"
   database "github.com/sajagsubedi/Restaurant-Management-Api/database"
 )
@@ -40,32 +41,45 @@ func CreateFoodDB(createFood Food)(Food, error) {
     VALUES (gen_random_uuid(), $1, $2, $3)
     RETURNING *;`
   var createdFood Food
-  err:= db.QueryRow(sqlStatement, createFood.Name, createFood.Price, createFood.Food_image).Scan(&createdFood.ID,&createdFood.Name,&createdFood.Price,&createdFood.Food_image)
+  err:= db.QueryRow(sqlStatement, createFood.Name, createFood.Price, createFood.Food_image).Scan(&createdFood.ID, &createdFood.Name, &createdFood.Price, &createdFood.Food_image)
   if err != nil {
     log.Fatalf("Unable to execute query %v", err)
   }
-  return createdFood,err
+  return createdFood,
+  err
 }
 
-func GetFoodById(id string) (Food,error){
+func GetFoodById(id string) (Food, error) {
   db:= database.CreateConnection()
   defer db.Close()
   var foundFood Food
-  sqlStatement:=`SELECT * FROM foods WHERE id=$1`
-  err:=db.QueryRow(sqlStatement,id).Scan(&foundFood.ID,&foundFood.Name,&foundFood.Price,&foundFood.Food_image)
-  if err !=nil{
+  sqlStatement:= `SELECT * FROM foods WHERE id=$1`
+  err:= db.QueryRow(sqlStatement, id).Scan(&foundFood.ID, &foundFood.Name, &foundFood.Price, &foundFood.Food_image)
+  if err != nil {
     log.Fatalf("Unable to execute query %v", err)
   }
-  return foundFood,err
+  return foundFood,
+  err
 }
 
-func DeleteFoodById(id string) error{
+func UpdateFoodDb(setVal string, values []interface{}) error {
   db:= database.CreateConnection()
   defer db.Close()
-  sqlStatement:=`DELETE FROM foods WHERE id=$1 RETURNING id;`
+		query := fmt.Sprintf("UPDATE foods SET %s WHERE id=$%d",setVal, len(values))
+  _,err:= db.Exec(query, values...)
+  if err != nil {
+    log.Fatalf("Unable to execute the query. %v", err)
+  }
+
+  return err
+}
+func DeleteFoodById(id string) error {
+  db:= database.CreateConnection()
+  defer db.Close()
+  sqlStatement:= `DELETE FROM foods WHERE id=$1 RETURNING id;`
   var returnid string
-  err:=db.QueryRow(sqlStatement,id).Scan(&returnid)
-  if err !=nil{
+  err:= db.QueryRow(sqlStatement, id).Scan(&returnid)
+  if err != nil {
     log.Fatalf("Unable to execute query %v", err)
   }
   return err
