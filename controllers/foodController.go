@@ -1,6 +1,8 @@
 package controllers
 
 import(
+  "time"
+  "context"
   "strings"
   "net/http"
   "github.com/gin-gonic/gin"
@@ -11,8 +13,11 @@ var validate = validator.New()
 
 func GetFoods() gin.HandlerFunc {
   return func(c *gin.Context) {
+  ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel() 
+	
     foods,
-    err:= models.GetFoodsDb()
+    err:= models.GetFoodsDb(ctx)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
         "error": "failed to fetch foods",
@@ -32,9 +37,11 @@ func GetFoods() gin.HandlerFunc {
 
 func GetFood() gin.HandlerFunc {
   return func(c *gin.Context) {
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel() 
     foodId:= c.Param("foodid")
     food,
-    err:= models.GetFoodById(foodId)
+    err:= models.GetFoodById(ctx,foodId)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
         "error": "Failed to fetch food",
@@ -51,6 +58,8 @@ func GetFood() gin.HandlerFunc {
 
 func CreateFood() gin.HandlerFunc {
   return func(c *gin.Context) {
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel() 
     var food models.Food
     if err:= c.BindJSON(&food); err != nil {
       c.JSON(http.StatusBadRequest, gin.H {
@@ -64,7 +73,7 @@ func CreateFood() gin.HandlerFunc {
       return
     }
     createdFood,
-    err:= models.CreateFoodDB(food)
+    err:= models.CreateFoodDB(ctx,food)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
         "success": false, "message": "Failed to add food",
@@ -80,6 +89,9 @@ func CreateFood() gin.HandlerFunc {
 }
 func UpdateFood() gin.HandlerFunc {
 	return func(c *gin.Context) {
+	  ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel() 
+	
 		var food models.Food
 
 		foodId := c.Param("foodid")
@@ -110,7 +122,7 @@ func UpdateFood() gin.HandlerFunc {
 
 		setVal:=strings.Join(updateObj,", ")
 		
-    err:=models.UpdateFoodDb(setVal,values)
+    err:=models.UpdateFoodDb(ctx,setVal,values)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update food"})
 			return
@@ -123,8 +135,11 @@ func UpdateFood() gin.HandlerFunc {
 
 func DeleteFood() gin.HandlerFunc {
   return func(c *gin.Context) {
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel() 
+	
     foodId:= c.Param("foodid")
-    err:= models.DeleteFoodById(foodId)
+    err:= models.DeleteFoodById(ctx,foodId)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
         "success": false, "message": "Failed to delete food",

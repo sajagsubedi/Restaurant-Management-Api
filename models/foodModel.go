@@ -3,28 +3,34 @@ package models
 import(
   "fmt"
   "log"
+  "time"
+  "context"
   database "github.com/sajagsubedi/Restaurant-Management-Api/database"
 )
+
 type Food struct {
-  ID *string `json:"id"`
-  Name *string `json:"name" validate:"required,min=2,max=100"`
-  Price *float64 `json:"price" validate:"required"`
-  Food_image *string `json:"food_image" validate:"required"`
+	ID         *int64     `json:"id"`
+	Name       *string    `json:"name" validate:"required,min=2,max=100"`
+	Price      *float64   `json:"price" validate:"required"`
+	Food_image  *string    `json:"food_image"`
+	MenuId     *int64     `json:"menuid"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
-func GetFoodsDb() ([]Food, error) {
+func GetFoodsDb(ctx context.Context) ([]Food, error) {
   db:= database.CreateConnection()
   defer db.Close()
   var foods []Food
   sqlStatement:= `SELECT * FROM foods`
   rows,
-  err:= db.Query(sqlStatement)
+  err:= db.QueryContext(ctx,sqlStatement)
   if err != nil {
     log.Fatalf("Unable to execute sql statement %v", err)
   }
   for rows.Next() {
     var food Food
-    err = rows.Scan(&food.ID, &food.Name, &food.Price, &food.Food_image)
+    err = rows.Scan(&food.ID, &food.Name, &food.Price, &food.Food_image, &food.MenuId,&food.CreatedAt,&food.UpdatedAt)
     if err != nil {
       log.Fatalf("Unable to scan row %v", err)
     }
@@ -34,14 +40,14 @@ func GetFoodsDb() ([]Food, error) {
   err
 }
 
-func CreateFoodDB(createFood Food)(Food, error) {
+func CreateFoodDB(ctx context.Context,createFood Food)(Food, error) {
   db:= database.CreateConnection()
   defer db.Close()
-  sqlStatement:= `INSERT INTO foods (id, name, price, food_image)
-    VALUES (gen_random_uuid(), $1, $2, $3)
-    RETURNING *;`
+  sqlStatement:= `INSERT INTO foods (name, price, food_image, menuid, created_at, updated_at) 
+		VALUES ($1, $2, $3, $4, NOW(), NOW()) 
+		RETURNING *;`
   var createdFood Food
-  err:= db.QueryRow(sqlStatement, createFood.Name, createFood.Price, createFood.Food_image).Scan(&createdFood.ID, &createdFood.Name, &createdFood.Price, &createdFood.Food_image)
+  err:= db.QueryRowContext(ctx,sqlStatement, createFood.Name, createFood.Price, createFood.Food_image, createFood.MenuId).Scan(&createdFood.ID, &createdFood.Name, &createdFood.Price, &createdFood.Food_image, &createdFood.MenuId,&createdFood.CreatedAt,&createdFood.UpdatedAt)
   if err != nil {
     log.Fatalf("Unable to execute query %v", err)
   }
@@ -49,12 +55,12 @@ func CreateFoodDB(createFood Food)(Food, error) {
   err
 }
 
-func GetFoodById(id string) (Food, error) {
+func GetFoodById(ctx context.Context,id string) (Food, error) {
   db:= database.CreateConnection()
   defer db.Close()
   var foundFood Food
   sqlStatement:= `SELECT * FROM foods WHERE id=$1`
-  err:= db.QueryRow(sqlStatement, id).Scan(&foundFood.ID, &foundFood.Name, &foundFood.Price, &foundFood.Food_image)
+  err:= db.QueryRowContext(ctx,sqlStatement, id).Scan(&foundFood.ID, &foundFood.Name, &foundFood.Price, &foundFood.Food_image,&foundFood.MenuId,&foundFood.CreatedAt,&foundFood.UpdatedAt)
   if err != nil {
     log.Fatalf("Unable to execute query %v", err)
   }
@@ -62,25 +68,25 @@ func GetFoodById(id string) (Food, error) {
   err
 }
 
-func UpdateFoodDb(setVal string, values []interface{}) error {
+func UpdateFoodDb(ctx context.Context,setVal string, values []interface{}) error {
   db:= database.CreateConnection()
   defer db.Close()
-		query := fmt.Sprintf("UPDATE foods SET %s WHERE id=$%d",setVal, len(values))
-  _,err:= db.Exec(query, values...)
+		query := fmt.Sprintf("UPDATE foods SET %s, updated_at=NOW() WHERE id=$%d",setVal, len(values))
+  _,err:= db.ExecContext(ctx,query, values...)
   if err != nil {
     log.Fatalf("Unable to execute the query. %v", err)
   }
 
   return err
 }
-func DeleteFoodById(id string) error {
+func DeleteFoodById(ctx context.Context,id string) error {
   db:= database.CreateConnection()
   defer db.Close()
   sqlStatement:= `DELETE FROM foods WHERE id=$1 RETURNING id;`
   var returnid string
-  err:= db.QueryRow(sqlStatement, id).Scan(&returnid)
+  err:= db.QueryRowContext(ctx,sqlStatement, id).Scan(&returnid)
   if err != nil {
-    log.Fatalf("Unable to execute query %v", err)
+    log.Fatalf("Una4ble to execute query %v", err)
   }
   return err
 }
