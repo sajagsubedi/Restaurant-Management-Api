@@ -36,3 +36,17 @@ func GetMenusDb(ctx context.Context) ([]Menu, error) {
   return menus,
   err
 }
+func CreateMenuDB(ctx context.Context,createMenu Menu)(Menu, error) {
+  db:= database.CreateConnection()
+  defer db.Close()
+  sqlStatement:= `INSERT INTO menus (name, category, start_date, end_date, created_at, updated_at) 
+		VALUES ($1, $2, $3, $4, NOW(), NOW()) 
+		RETURNING *;`
+  var createdMenu Menu
+  err:= db.QueryRowContext(ctx,sqlStatement, createMenu.Name, createMenu.Category, createMenu.StartDate, createMenu.EndDate).Scan(&createdMenu.ID, &createdMenu.Name, &createdMenu.Category, &createdMenu.StartDate, &createdMenu.EndDate,&createdMenu.CreatedAt,&createdMenu.UpdatedAt)
+  if err != nil {
+    log.Fatalf("Unable to execute query %v", err)
+  }
+  return createdMenu,
+  err
+}
