@@ -68,6 +68,8 @@ func GetFoodById(ctx context.Context,id string) (Food, error) {
   err
 }
 
+
+
 func UpdateFoodDb(ctx context.Context,setVal string, values []interface{}) error {
   db:= database.CreateConnection()
   defer db.Close()
