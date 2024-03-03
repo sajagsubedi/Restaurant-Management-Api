@@ -1,5 +1,7 @@
 package models
 import(
+  "fmt"
+  "database/sql"
   "log"
   "time"
   "context"
@@ -36,6 +38,21 @@ func GetMenusDb(ctx context.Context) ([]Menu, error) {
   return menus,
   err
 }
+func GetMenuById(ctx context.Context, menuid string) (Menu, error) {
+    db := database.CreateConnection()
+    defer db.Close()
+    var foundMenu Menu
+    sqlStatement := `SELECT * FROM menus WHERE id=$1`
+    err := db.QueryRowContext(ctx, sqlStatement, menuid).Scan(&foundMenu.ID, &foundMenu.Name, &foundMenu.Category, &foundMenu.StartDate, &foundMenu.EndDate, &foundMenu.CreatedAt, &foundMenu.UpdatedAt)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return Menu{}, fmt.Errorf("Menu with id %s not found", menuid)
+        }
+        return Menu{}, fmt.Errorf("error executing query: %w", err)
+    }
+    return foundMenu, nil
+}
+
 func CreateMenuDB(ctx context.Context,createMenu Menu)(Menu, error) {
   db:= database.CreateConnection()
   defer db.Close()

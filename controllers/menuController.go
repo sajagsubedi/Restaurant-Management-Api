@@ -33,9 +33,26 @@ func GetMenus() gin.HandlerFunc {
 
 func GetMenu() gin.HandlerFunc {
   return func(c *gin.Context) {
-    c.JSON(http.StatusOK, gin.H {
-      "message": "get menu by id",
-    })
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel() 
+    menuId:=c.Param("menuid")
+    menuInfo,err:=models.GetMenuById(ctx,menuId)
+    if err!=nil{
+      c.JSON(http.StatusInternalServerError,gin.H{
+        "message":err.Error(),})
+        return
+    }
+    foods,err:=models.GetFoodByMenuId(ctx,menuId)
+        if err!=nil{
+      c.JSON(http.StatusInternalServerError,gin.H{
+        "message":err.Error(),
+      })
+      return
+    }
+    if foods==nil{
+    c.JSON(http.StatusOK,gin.H{"success":true,"message":"Fetched menu","menuInfo":menuInfo,"foods":[0]models.Food{}})
+    }
+    c.JSON(http.StatusOK,gin.H{"success":true,"message":"Fetched menu","menuInfo":menuInfo,"foods":foods})
   }
 }
 

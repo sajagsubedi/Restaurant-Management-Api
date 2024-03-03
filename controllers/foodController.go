@@ -1,6 +1,7 @@
 package controllers
 
 import(
+  "fmt"
   "time"
   "context"
   "strings"
@@ -13,14 +14,13 @@ var validate = validator.New()
 
 func GetFoods() gin.HandlerFunc {
   return func(c *gin.Context) {
-  ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel() 
-	
-    foods,
-    err:= models.GetFoodsDb(ctx)
+    ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+
+    foods,err:= models.GetFoodsDb(ctx)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
-        "error": "failed to fetch foods",
+        "error": "Failed to fetch foods",
       })
     }
     if foods == nil {
@@ -30,6 +30,8 @@ func GetFoods() gin.HandlerFunc {
       return
     }
     c.JSON(http.StatusOK, gin.H {
+      "success": true,
+      "message": "Fetch foods successfully",
       "foods": foods,
     })
   }
@@ -37,16 +39,15 @@ func GetFoods() gin.HandlerFunc {
 
 func GetFood() gin.HandlerFunc {
   return func(c *gin.Context) {
-    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel() 
+    ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
     foodId:= c.Param("foodid")
-    food,
-    err:= models.GetFoodById(ctx,foodId)
+    food,err:= models.GetFoodById(ctx, foodId)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
-        "error": "Failed to fetch food",
+        "error": err.Error(),
       })
-
+      return
     }
     c.JSON(http.StatusOK, gin.H {
       "success": true,
@@ -58,8 +59,8 @@ func GetFood() gin.HandlerFunc {
 
 func CreateFood() gin.HandlerFunc {
   return func(c *gin.Context) {
-    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel() 
+    ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
     var food models.Food
     if err:= c.BindJSON(&food); err != nil {
       c.JSON(http.StatusBadRequest, gin.H {
@@ -72,82 +73,93 @@ func CreateFood() gin.HandlerFunc {
         "error": validationErr.Error()})
       return
     }
-    createdFood,
-    err:= models.CreateFoodDB(ctx,food)
-    if err != nil {
-      c.JSON(http.StatusInternalServerError, gin.H {
-        "success": false, "message": "Failed to add food",
+    _, err:= models.GetMenuById(ctx, 
+      fmt.Sprintf("%d", *food.MenuId))
+      if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H {
+          "success": false, "message": err.Error(),
+        })
+        return
+      }
+      createdFood,err:= models.CreateFoodDB(ctx, food)
+      if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H {
+          "success": false, "message": "Failed to add food",
+        })
+        return
+      }
+      c.JSON(http.StatusCreated, gin.H {
+        "success": true,
+        "message": "Created food successfully!",
+        "food": createdFood,
       })
-      return
     }
-    c.JSON(http.StatusCreated, gin.H {
-      "success": true,
-      "message": "Created food successfully!",
-      "food": createdFood,
-    })
   }
-}
-func UpdateFood() gin.HandlerFunc {
-	return func(c *gin.Context) {
-	  ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel() 
-	
-		var food models.Food
+  func UpdateFood() gin.HandlerFunc {
+    return func(c *gin.Context) {
+      ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+      defer cancel()
 
-		foodId := c.Param("foodid")
+      var food models.Food
 
-		if err := c.BindJSON(&food); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+      foodId:= c.Param("foodid")
 
-		var updateObj []string
-		var values []interface{}
+      if err:= c.BindJSON(&food); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H {
+          "error": err.Error()})
+        return
+      }
 
-		if food.Name != nil {
-			updateObj = append(updateObj, "name=$1")
-			values = append(values, *food.Name)
-		}
+      var updateObj []string
+      var values []interface {}
 
-		if food.Price != nil {
-			updateObj = append(updateObj, "price=$2")
-			values = append(values, *food.Price)
-		}
+      if food.Name != nil {
+        updateObj = append(updateObj, "name=$1")
+        values = append(values, *food.Name)
+      }
 
-		if food.Food_image != nil {
-			updateObj = append(updateObj, "food_image=$3")
-			values = append(values, *food.Food_image)
-		}
-		values = append(values, foodId)
+      if food.Price != nil {
+        updateObj = append(updateObj, "price=$2")
+        values = append(values, *food.Price)
+      }
 
-		setVal:=strings.Join(updateObj,", ")
-		
-    err:=models.UpdateFoodDb(ctx,setVal,values)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update food"})
-			return
-		}
+      if food.Food_image != nil {
+        updateObj = append(updateObj, "food_image=$3")
+        values = append(values, *food.Food_image)
+      }
+      values = append(values, foodId)
 
-		c.JSON(http.StatusOK, gin.H{"message": "Food item updated successfully"})
-	}
-}
+      setVal:= strings.Join(updateObj, ", ")
 
+      err:= models.UpdateFoodDb(ctx, setVal, values)
+      if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H {
+          "error": err.Error()})
+        return
+      }
 
-func DeleteFood() gin.HandlerFunc {
-  return func(c *gin.Context) {
-    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel() 
-	
-    foodId:= c.Param("foodid")
-    err:= models.DeleteFoodById(ctx,foodId)
-    if err != nil {
-      c.JSON(http.StatusInternalServerError, gin.H {
-        "success": false, "message": "Failed to delete food",
+      c.JSON(http.StatusOK, gin.H {
+        "success": true, "message": "Food item updated successfully",
       })
-      return
     }
-    c.JSON(http.StatusOK, gin.H {
-      "success": true, "message": "Delete food successfully!",
-    })
   }
-}
+
+
+  func DeleteFood() gin.HandlerFunc {
+    return func(c *gin.Context) {
+      ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+      defer cancel()
+
+      foodId:= c.Param("foodid")
+      err:= models.DeleteFoodById(ctx, foodId)
+      if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H {
+          "error": err.Error(),
+        })
+        return
+      }
+      c.JSON(http.StatusOK, gin.H {
+        "success": true, "message": "Delete food successfully!",
+      })
+    }
+  }
