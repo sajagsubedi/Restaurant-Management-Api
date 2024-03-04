@@ -9,8 +9,8 @@ import(
 )
 type Menu struct {
 	ID        *int64     `json:"id"`
-	Name      string     `json:"name" validate:"required"`
-	Category  string     `json:"category" validate:"required"`
+	Name      *string     `json:"name" validate:"required"`
+	Category  *string     `json:"category" validate:"required"`
 	StartDate *time.Time `json:"start_date"`
 	EndDate   *time.Time `json:"end_date"`
 	CreatedAt time.Time  `json:"created_at"`
@@ -66,4 +66,21 @@ func CreateMenuDB(ctx context.Context,createMenu Menu)(Menu, error) {
   }
   return createdMenu,
   err
+}
+
+func UpdateMenuDb(ctx context.Context, setVal string, values []interface {}) error {
+  db:= database.CreateConnection()
+  defer db.Close()
+  query:= fmt.Sprintf("UPDATE menus SET %s, updated_at=NOW() WHERE id=$%d", setVal, len(values))
+  _,
+  err:= db.ExecContext(ctx, query, values...)
+  if err != nil { 
+    if err == sql.ErrNoRows {
+      return fmt.Errorf("Menu with id %s not found", values[len(values)-1])
+    }
+
+    return fmt.Errorf("Error while executing query: %w", err)
+  }
+
+  return err
 }
