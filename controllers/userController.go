@@ -8,6 +8,7 @@ import(
   "github.com/gin-gonic/gin"
   "golang.org/x/crypto/bcrypt"
   "github.com/sajagsubedi/Restaurant-Management-Api/models"
+  "github.com/sajagsubedi/Restaurant-Management-Api/helpers"
 )
 
 func GetUsers() gin.HandlerFunc {
@@ -71,7 +72,19 @@ func Signup() gin.HandlerFunc {
   password:=HashPassword(*user.Password)
   user.Password=&password
   insertedUser,err:=models.AddUser(ctx,user)
-  
+  accessToken,refreshToken,err:=helpers.GenerateAllTokens(insertedUser)
+  if err!=nil{
+    c.JSON(http.StatusInternalServerError,gin.H{"message":"Internal Server Error occurred!. Try again later"})
+    return
+  }
+  err=models.AddToken(ctx,insertedUser.ID, accessToken,refreshToken)
+  if err!=nil{
+    c.JSON(http.StatusInternalServerError,gin.H{
+    "message":"Internal Server Error occured!. Try agin later",
+    })
+    return
+  }
+  c.JSON(http.StatusOK,gin.H{"success":true,"message":"New account created Successfully!","access_token":accessToken,"refresh_token":refreshToken})
 }}
 
 func UpdateProfile() gin.HandlerFunc {
