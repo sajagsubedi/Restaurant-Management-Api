@@ -18,6 +18,27 @@ type User struct {
 	Created_at time.Time  `json:"created_at"`
 	Updated_at time.Time  `json:"updated_at"`
 }
+func GetUsersDb(ctx context.Context) ([]User, error) {
+  db:= database.CreateConnection()
+  defer db.Close()
+  var users []User
+  sqlStatement:= `SELECT * FROM users`
+  rows,
+  err:= db.QueryContext(ctx, sqlStatement)
+  if err != nil {
+    log.Fatalf("Unable to execute sql statement %v", err)
+  }
+  for rows.Next() {
+    var user User
+    err = rows.Scan(&user.ID,&user.First_name,&user.Last_name,&user.Password,&user.Email,&user.Phone,&user.Created_at,&user.Updated_at)
+    if err != nil {
+      log.Fatalf("Unable to scan row %v", err)
+    }
+    users = append(users, user)
+  }
+  return users,
+  err
+}
 
 func AddUser(ctx context.Context,user User)(User,error){
    db:= database.CreateConnection()

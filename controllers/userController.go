@@ -12,12 +12,30 @@ import(
 )
 
 func GetUsers() gin.HandlerFunc {
-  return func(c *gin.Context) { 
-    c.JSON(http.StatusOK,gin.H{
-      "message": "Get users",
+  return func(c *gin.Context) {
+    ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+
+    users,err:= models.GetUsersDb(ctx)
+    if err != nil {
+      c.JSON(http.StatusInternalServerError, gin.H {
+        "error": "Failed to fetch users",
+      })
+    }
+    if users == nil {
+      c.JSON(http.StatusOK, gin.H {
+        "users": [0]models.User {},
+      })
+      return
+    }
+    c.JSON(http.StatusOK, gin.H {
+      "success": true,
+      "message": "Fetch users successfully",
+      "users": users,
     })
   }
 }
+
 
 func GetUser() gin.HandlerFunc {
   return func(c *gin.Context) { 
