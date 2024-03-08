@@ -17,7 +17,7 @@ func GetMenus() gin.HandlerFunc {
     menus,err:= models.GetMenusDb(ctx)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
-        "error": "failed to fetch menus",
+        "success":false,"message": "failed to fetch menus",
       })
     }
     if menus == nil {
@@ -72,13 +72,13 @@ func CreateMenu() gin.HandlerFunc {
     var menu models.Menu
     if err:= c.BindJSON(&menu); err != nil {
       c.JSON(http.StatusBadRequest, gin.H {
-        "error": err.Error()})
+        "success":false,"message": err.Error()})
       return
     }
     validationErr:= validate.Struct(menu)
     if validationErr != nil {
       c.JSON(http.StatusBadRequest, gin.H {
-        "error": validationErr.Error(),})
+        "success":false,"message": validationErr.Error(),})
       return
     }
     createdMenu,
@@ -110,7 +110,7 @@ func UpdateMenu() gin.HandlerFunc {
 
     if err:= c.BindJSON(&menu); err != nil {
       c.JSON(http.StatusBadRequest, gin.H {
-        "error": err.Error(),})
+        "success":false,"message": err.Error(),})
       return
     }
 
@@ -143,7 +143,7 @@ func UpdateMenu() gin.HandlerFunc {
     err:= models.UpdateMenuDb(ctx, setVal, values)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
-        "error": err.Error(),})
+        "success":false,"message": err.Error(),})
       return
     }
 

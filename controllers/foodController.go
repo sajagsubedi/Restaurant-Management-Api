@@ -20,7 +20,7 @@ func GetFoods() gin.HandlerFunc {
     foods,err:= models.GetFoodsDb(ctx)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
-        "error": "Failed to fetch foods",
+        "success":false,"message": "Failed to fetch foods",
       })
     }
     if foods == nil {
@@ -45,7 +45,7 @@ func GetFood() gin.HandlerFunc {
     food,err:= models.GetFoodById(ctx, foodId)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
-        "error": err.Error(),
+        "success":false,"message": err.Error(),
       })
       return
     }
@@ -64,13 +64,13 @@ func CreateFood() gin.HandlerFunc {
     var food models.Food
     if err:= c.BindJSON(&food); err != nil {
       c.JSON(http.StatusBadRequest, gin.H {
-        "error": err.Error()})
+        "success":false,"message": err.Error()})
       return
     }
     validationErr:= validate.Struct(food)
     if validationErr != nil {
       c.JSON(http.StatusBadRequest, gin.H {
-        "error": validationErr.Error()})
+        "success":false,"message": validationErr.Error()})
       return
     }
     _, err:= models.GetMenuById(ctx, 
@@ -106,7 +106,7 @@ func CreateFood() gin.HandlerFunc {
 
       if err:= c.BindJSON(&food); err != nil {
         c.JSON(http.StatusBadRequest, gin.H {
-          "error": err.Error()})
+          "success":false,"message": err.Error()})
         return
       }
 
@@ -134,7 +134,7 @@ func CreateFood() gin.HandlerFunc {
       err:= models.UpdateFoodDb(ctx, setVal, values)
       if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H {
-          "error": err.Error()})
+          "success":false,"message": err.Error()})
         return
       }
 
@@ -154,7 +154,7 @@ func CreateFood() gin.HandlerFunc {
       err:= models.DeleteFoodById(ctx, foodId)
       if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H {
-          "error": err.Error(),
+          "success":false,"message": err.Error(),
         })
         return
       }
