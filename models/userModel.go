@@ -5,6 +5,7 @@ import (
   "fmt"
 	"time"
 	"context"
+	"database/sql"
   database "github.com/sajagsubedi/Restaurant-Management-Api/database"
 )
 
@@ -15,8 +16,8 @@ type User struct {
 	Password   *string    `json:"password" validate:"required,min=6"`
 	Email      *string    `json:"email" validate:"email,required"`
 	Phone      *string    `json:"phone" validate:"required"`
-	Created_at time.Time  `json:"created_at"`
-	Updated_at time.Time  `json:"updated_at"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
 }
 func GetUsersDb(ctx context.Context) ([]User, error) {
   db:= database.CreateConnection()
@@ -30,7 +31,7 @@ func GetUsersDb(ctx context.Context) ([]User, error) {
   }
   for rows.Next() {
     var user User
-    err = rows.Scan(&user.ID,&user.First_name,&user.Last_name,&user.Password,&user.Email,&user.Phone,&user.Created_at,&user.Updated_at)
+    err = rows.Scan(&user.ID,&user.First_name,&user.Last_name,&user.Password,&user.Email,&user.Phone,&user.CreatedAt,&user.UpdatedAt)
     if err != nil {
       log.Fatalf("Unable to scan row %v", err)
     }
@@ -47,7 +48,7 @@ func AddUser(ctx context.Context,user User)(User,error){
     VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) 
     RETURNING *;`
     var createdUser User 
-    err:=db.QueryRowContext(ctx, sqlStatement, user.First_name, user.Last_name, user.Password, user.Email, user.Phone).Scan(&createdUser.ID,&createdUser.First_name,&createdUser.Last_name,&createdUser.Password,&createdUser.Email,&createdUser.Phone,&createdUser.Created_at,&createdUser.Updated_at)
+    err:=db.QueryRowContext(ctx, sqlStatement, user.First_name, user.Last_name, user.Password, user.Email, user.Phone).Scan(&createdUser.ID,&createdUser.First_name,&createdUser.Last_name,&createdUser.Password,&createdUser.Email,&createdUser.Phone,&createdUser.CreatedAt,&createdUser.UpdatedAt)
     if err != nil {
     log.Fatalf("Unable to execute query %v", err)
   }
@@ -65,3 +66,22 @@ func CountUser(parameter string, value *string)(int,error){
    }
    return count,err
   }
+  
+  func GetUserById(ctx context.Context, id string) (User, error) {
+  db:= database.CreateConnection()
+  defer db.Close()
+  var foundUser User
+  sqlStatement:= `SELECT * FROM users WHERE id=$1`
+  err:= db.QueryRowContext(ctx, sqlStatement, id).Scan(&foundUser.ID, &foundUser.First_name, &foundUser.Last_name, &foundUser.Password, &foundUser.Email, &foundUser.Phone, &foundUser.CreatedAt,&foundUser.UpdatedAt)
+  if err != nil {
+    if err == sql.ErrNoRows {
+      return User {},
+      fmt.Errorf("User with id %s not found", id)
+    }
+
+    return User {},
+    fmt.Errorf("Error executing query: %w", err)
+  }
+  return foundUser,
+  nil
+}

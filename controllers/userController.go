@@ -37,12 +37,24 @@ func GetUsers() gin.HandlerFunc {
 }
 
 
-func GetUser() gin.HandlerFunc {
-  return func(c *gin.Context) { 
-    c.JSON(http.StatusOK,gin.H{
-      "message": "Get user",
+func GetUser() gin.HandlerFunc {  return func(c *gin.Context) {
+    ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    userId:= c.Param("userid")
+    user,err:= models.GetUserById(ctx, userId)
+    if err != nil {
+      c.JSON(http.StatusInternalServerError, gin.H {
+        "error": err.Error(),
+      })
+      return
+    }
+    c.JSON(http.StatusOK, gin.H {
+      "success": true,
+      "message": "Fetched user successfully",
+      "user": user,
     })
   }
+
 }
 
 func Login() gin.HandlerFunc {
