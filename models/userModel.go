@@ -16,7 +16,6 @@ type User struct {
 	Password   *string    `json:"password" validate:"required,min=6"`
 	Email      *string    `json:"email" validate:"email,required"`
 	Phone      *string    `json:"phone" validate:"required, eq=admin|eq=user`
-	Role       *string `json:"role" vali`
 	CreatedAt  time.Time  `json:"created_at"`
 	UpdatedAt  time.Time  `json:"updated_at"`
 }
@@ -68,7 +67,7 @@ func CountUser(parameter string, value *string)(int,error){
    return count,err
   }
   
-  func FilterUsers(ctx context.Context,parameter string ,value *string)(User, error){
+  func FilterUsers(ctx context.Context,parameter string ,value interface{})(User, error){
     db:= database.CreateConnection()
     defer db.Close()
     var foundUser User
@@ -84,21 +83,3 @@ func CountUser(parameter string, value *string)(int,error){
   
   }
   
-  func GetUserById(ctx context.Context, id string) (User, error) {
-  db:= database.CreateConnection()
-  defer db.Close()
-  var foundUser User
-  sqlStatement:= `SELECT * FROM users WHERE id=$1`
-  err:= db.QueryRowContext(ctx, sqlStatement, id).Scan(&foundUser.ID, &foundUser.First_name, &foundUser.Last_name, &foundUser.Password, &foundUser.Email, &foundUser.Phone, &foundUser.CreatedAt,&foundUser.UpdatedAt)
-  if err != nil {
-    if err == sql.ErrNoRows {
-      return User {},
-      fmt.Errorf("User with id %s not found", id)
-    }
-
-    return User {},
-    fmt.Errorf("Internal Server Error")
-  }
-  return foundUser,
-  nil
-}

@@ -1,6 +1,7 @@
 package controllers
 
 import(
+  "fmt"
   "log"
   "time"
   "context"
@@ -41,7 +42,15 @@ func GetUser() gin.HandlerFunc {  return func(c *gin.Context) {
     ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
     userId:= c.Param("userid")
-    user,err:= models.GetUserById(ctx, userId)
+    parameter:="id"
+    user,err:= models.FilterUsers(ctx, parameter,userId)
+    if user.ID==nil{
+      msg:=fmt.Sprintf("User with id %s doesn't exist!",userId)
+    c.JSON(http.StatusBadRequest, gin.H {
+        "success":false,"message":msg,
+      })
+     return
+    }
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
         "success":false,"message": err.Error(),
