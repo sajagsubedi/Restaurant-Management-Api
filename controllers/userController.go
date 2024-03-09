@@ -135,13 +135,7 @@ func Signup() gin.HandlerFunc {
     c.JSON(http.StatusInternalServerError,gin.H{"message":"Internal Server Error occurred!. Try again later"})
     return
   }
-  err=models.AddToken(ctx,insertedUser.ID, accessToken,refreshToken)
-  if err!=nil{
-    c.JSON(http.StatusInternalServerError,gin.H{
-    "message":"Internal Server Error occured!. Try agin later",
-    })
-    return
-  }
+
   c.JSON(http.StatusOK,gin.H{"success":true,"message":"New account created Successfully!","access_token":accessToken,"refresh_token":refreshToken})
 }}
 
