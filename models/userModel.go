@@ -15,7 +15,8 @@ type User struct {
 	Last_name  *string    `json:"last_name" validate:"required,min=2,max=100"`
 	Password   *string    `json:"password" validate:"required,min=6"`
 	Email      *string    `json:"email" validate:"email,required"`
-	Phone      *string    `json:"phone" validate:"required, eq=admin|eq=user`
+	Phone     *string     `json:"phone"`
+  UserType      *string    `json:"user_type" validate:"eq=admin|eq=user"`
 	CreatedAt  time.Time  `json:"created_at"`
 	UpdatedAt  time.Time  `json:"updated_at"`
 }
@@ -44,11 +45,12 @@ func GetUsersDb(ctx context.Context) ([]User, error) {
 func AddUser(ctx context.Context,user User)(User,error){
    db:= database.CreateConnection()
   defer db.Close()
-  sqlStatement:= `INSERT INTO users (first_name, last_name, password, email, phone,created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) 
+  userType:="user"
+  sqlStatement:= `INSERT INTO users (first_name, last_name, password, email, phone,user_type,created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5,$6, NOW(), NOW()) 
     RETURNING *;`
     var createdUser User 
-    err:=db.QueryRowContext(ctx, sqlStatement, user.First_name, user.Last_name, user.Password, user.Email, user.Phone).Scan(&createdUser.ID,&createdUser.First_name,&createdUser.Last_name,&createdUser.Password,&createdUser.Email,&createdUser.Phone,&createdUser.CreatedAt,&createdUser.UpdatedAt)
+    err:=db.QueryRowContext(ctx, sqlStatement, user.First_name, user.Last_name, user.Password, user.Email, user.Phone).Scan(&createdUser.ID,&createdUser.First_name,&createdUser.Last_name,&createdUser.Password,&createdUser.Email,&createdUser.Phone,userType,&createdUser.CreatedAt,&createdUser.UpdatedAt)
     if err != nil {
     log.Fatalf("Unable to execute query %v", err)
   }
