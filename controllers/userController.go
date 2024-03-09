@@ -57,13 +57,40 @@ func GetUser() gin.HandlerFunc {  return func(c *gin.Context) {
 
 }
 
-func Login() gin.HandlerFunc {
-  return func(c *gin.Context) { 
-    c.JSON(http.StatusOK,gin.H{
-      "message": "login",
-    })
+func Login() gin.HandlerFunc {  
+  return func(c *gin.Context) {
+    ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    var user models.User
+    var foundUser models.User
+    if err:=c.BindJSON(&user);err!=nil{
+      c.JSON(http.StatusBadRequest, gin.H {"success":false,"message": err.Error()})
+        return
+    }
+    if user.Email==nil || user.Password==nil{
+      c.JSON(http.StatusBadRequest, gin.H {"success":false,"message":"Please enter correct credentials to login!"})
+      return 
+    }
+    parameter:="email"
+    foundUser,err:=models.FilterUsers(ctx,parameter,user.Email)
+    if foundUser.ID==nil{
+      c.JSON(http.StatusBadRequest, gin.H {"success":false,"message":"Please enter correct credentials to login!"})
+      return
+    }
+    if err !=nil{
+        c.JSON(http.StatusInternalServerError, gin.H {"success":false,"message":err.Error()})
+      return
+    }
+    isCorrectPassword:=VerifyPassword(*user.Password,*foundUser.Password)
+    if isCorrectPassword!=true{  
+      c.JSON(http.StatusBadRequest, gin.H {"success":false,"message":"Please enter correct credentials to login!"})
+     return
+    }
+   accessToken, refreshToken, _ :=helpers.GenerateAllTokens(foundUser)
+   c.JSON(http.StatusOK,gin.H{"success":true,"message":"Signed in successfully!","access_token":accessToken,"refresh_token":refreshToken})
   }
 }
+
 func Signup() gin.HandlerFunc {
   return func(c *gin.Context) { 
     ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
@@ -132,4 +159,11 @@ func HashPassword(password string) string {
 	}
 
 	return string(bytes)
+}
+func VerifyPassword(userPassword string, providedPassword string)bool{
+  err:=bcrypt.CompareHashAndPassword([]byte(providedPassword),[]byte(userPassword))
+  if err!=nil{
+    return false
+  }
+  return true
 }

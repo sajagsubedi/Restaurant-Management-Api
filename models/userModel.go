@@ -58,13 +58,29 @@ func AddUser(ctx context.Context,user User)(User,error){
 func CountUser(parameter string, value *string)(int,error){
    db:= database.CreateConnection()
    defer db.Close()
-   sqlStatement:=fmt.Sprintf("SELECT COUNT(*) FROM users WHERE %s=$1",parameter)
+   sqlStatement:=fmt.Sprintf("SELECT COUNT(*) FROM users WHERE %s=$1;",parameter)
    count:=0
    err:=db.QueryRow(sqlStatement,value).Scan(&count)
    if err!=nil{
     log.Fatalf("Unable to execute query %v", err)
    }
    return count,err
+  }
+  
+  func FilterUsers(ctx context.Context,parameter string ,value *string)(User, error){
+    db:= database.CreateConnection()
+    defer db.Close()
+    var foundUser User
+   sqlStatement:=fmt.Sprintf("SELECT * FROM users WHERE %s=$1;",parameter)
+   err:=db.QueryRowContext(ctx,sqlStatement,value).Scan(&foundUser.ID, &foundUser.First_name, &foundUser.Last_name, &foundUser.Password, &foundUser.Email, &foundUser.Phone, &foundUser.CreatedAt,&foundUser.UpdatedAt)
+   if err!=nil{
+    if err == sql.ErrNoRows {
+      return User{},nil 
+    }
+    return User{},fmt.Errorf("Internal Server Error")
+   }
+   return foundUser,err
+  
   }
   
   func GetUserById(ctx context.Context, id string) (User, error) {
@@ -80,7 +96,7 @@ func CountUser(parameter string, value *string)(int,error){
     }
 
     return User {},
-    fmt.Errorf("Error executing query: %w", err)
+    fmt.Errorf("Internal Server Error")
   }
   return foundUser,
   nil
