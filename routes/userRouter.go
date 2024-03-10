@@ -7,9 +7,10 @@ import(
 )
 
 func UserRoutes(incomingRoutes *gin.Engine) {
-  incomingRoutes.GET("/api/v1/users", controller.GetUsers())
-  incomingRoutes.GET("/api/v1/users/:userid", controller.GetUser())
-  incomingRoutes.POST("/api/v1/users/signup", controller.Signup())
-  incomingRoutes.POST("/api/v1/users/signin", controller.Login())
-  incomingRoutes.Use(middlewares.CheckUser()).PATCH("/api/v1/users/update",controller.UpdateProfile())
+  userRoutes:=incomingRoutes.Group("/api/v1/users")
+  userRoutes.GET("/", controller.GetUsers())
+  userRoutes.GET("/:userid", controller.GetUser())
+  userRoutes.POST("/signup", controller.Signup())
+  userRoutes.POST("/signin", controller.Login())
+  userRoutes.PATCH("/update",controller.UpdateProfile()).Use(middlewares.CheckUser())
 }
