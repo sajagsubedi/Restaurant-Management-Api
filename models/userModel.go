@@ -84,4 +84,21 @@ func CountUser(parameter string, value *string)(int,error){
    return foundUser,err
   
   }
+  func UpdateUser(ctx context.Context, setVal string, values []interface {}) error {
+  db:= database.CreateConnection()
+  defer db.Close()
+  query:= fmt.Sprintf("UPDATE users SET %s, updated_at=NOW() WHERE id=$%d", setVal, len(values))
+  _,
+  err:= db.ExecContext(ctx, query, values...)
+  if err != nil { 
+    if err == sql.ErrNoRows {
+      return fmt.Errorf("Your profile doesn't exits")
+    }
+
+    return fmt.Errorf("Error while executing query: %w", err)
+  }
+
+  return err
+}
+
   

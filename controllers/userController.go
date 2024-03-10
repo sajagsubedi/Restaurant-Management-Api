@@ -4,6 +4,7 @@ import(
   "fmt"
   "log"
   "time"
+  "strings"
   "context"
   "net/http"
   "github.com/gin-gonic/gin"
@@ -46,7 +47,7 @@ func GetUser() gin.HandlerFunc {  return func(c *gin.Context) {
     user,err:= models.FilterUsers(ctx, parameter,userId)
     if user.ID==nil{
       msg:=fmt.Sprintf("User with id %s doesn't exist!",userId)
-    c.JSON(http.StatusBadRequest, gin.H {
+    c.JSON(http.StatusNotFound, gin.H {
         "success":false,"message":msg,
       })
      return
@@ -148,13 +149,56 @@ func Signup() gin.HandlerFunc {
   c.JSON(http.StatusOK,gin.H{"success":true,"message":"New account created Successfully!","access_token":accessToken,"refresh_token":refreshToken})
 }}
 
-func UpdateProfile() gin.HandlerFunc {
-  return func(c *gin.Context) { 
-    c.JSON(http.StatusOK,gin.H{
-      "message": "update profile",
-    })
+  func UpdateProfile() gin.HandlerFunc {
+    return func(c *gin.Context) {
+      ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+      defer cancel()
+      var user models.User
+      if err:= c.BindJSON(&user); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H {
+          "success":false,"message": err.Error()})
+        return
+      }
+
+      var updateObj []string
+      var values []interface {}
+     
+      if user.First_name != nil {
+        updateObj = append(updateObj, fmt.Sprintf("first_name=$%d",len(values)+1))
+        values = append(values, *user.First_name)
+      }
+      
+      if user.Last_name != nil {
+        updateObj = append(updateObj, fmt.Sprintf("last_name=$%d",len(values)+1))
+        values = append(values, *user.Last_name)
+      }
+           
+        if user.Password != nil {
+        password:=HashPassword(*user.Password)
+        updateObj = append(updateObj, fmt.Sprintf("password=$%d",len(values)+1))
+        values = append(values,password)
+      }
+      userid,_:=c.Get("userid")
+      values = append(values,userid)
+      if len(values)<2{
+        c.JSON(http.StatusBadRequest,gin.H{"success":false,"message":"Please enter some fields to update"})
+        return
+      }
+      setVal:= strings.Join(updateObj, ", ")
+
+      err:= models.UpdateUser(ctx, setVal, values)
+      if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H {
+          "success":false,"message": err.Error()})
+        return
+      }
+
+      c.JSON(http.StatusOK, gin.H {
+        "success": true, "message": "Your profile updated successfully",
+      })
+    }
   }
-}
+
 func HashPassword(password string) string {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	if err != nil {

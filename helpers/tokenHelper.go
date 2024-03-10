@@ -44,7 +44,7 @@ func GenerateAllTokens(userDetails models.User)(string,string,error){
 	return accessToken, refreshToken, err
 }
 
-func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
+func ValidateToken(signedToken string) (*SignedDetails,error) {
 	token, err := jwt.ParseWithClaims(
 		signedToken,
 		&SignedDetails{},
@@ -52,20 +52,18 @@ func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
 			return []byte(SECRET_KEY), nil
 		},
 	)
-
+	if err !=nil{
+	  return nil,err
+	}
 	claims, ok := token.Claims.(*SignedDetails)
-	if !ok {
-		msg = fmt.Sprintf("Invalid token!")
-		msg = err.Error()
-		return
+  if !ok || !token.Valid {	
+    return claims,fmt.Errorf("Invalid token!")
 	}
+	
+if claims.ExpiresAt < time.Now().Local().Unix() {
+	return claims,fmt.Errorf("Token is expired!")
+}
 
-	if claims.ExpiresAt < time.Now().Local().Unix() {
-		msg = fmt.Sprint("Token is expired!")
-		msg = err.Error()
-		return
-	}
-
-	return claims, msg
+	return claims, nil
 
 }

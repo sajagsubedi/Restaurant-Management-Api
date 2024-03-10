@@ -34,7 +34,7 @@ func main() {
   config.AllowHeaders = []string {
     "Origin",
     "Content-Type",
-    "Authorization",
+    "auth_token",
   }
 
   //middlewares
