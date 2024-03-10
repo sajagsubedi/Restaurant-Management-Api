@@ -1,6 +1,7 @@
 package controllers
 
 import(
+  "fmt"
   "strings"
   "context"
   "time"
@@ -118,21 +119,20 @@ func UpdateMenu() gin.HandlerFunc {
     var values []interface {}
 
     if menu.Name != nil {
-      updateObj = append(updateObj, "name=$1")
+        updateObj = append(updateObj, fmt.Sprintf("name=$%d",len(values)+1))
       values = append(values, *menu.Name)
     }
 
-    if menu.Category != nil {
-      updateObj = append(updateObj, "category=$2")
+    if menu.Category != nil {        updateObj = append(updateObj, fmt.Sprintf("category=$%d",len(values)+1))
+
       values = append(values, *menu.Category)
     }
 
-    if menu.StartDate != nil {
-      updateObj = append(updateObj, "start_date=$3")
+    if menu.StartDate != nil {        updateObj = append(updateObj, fmt.Sprintf("start_date=$%d",len(values)+1))
+
       values = append(values, *menu.StartDate)
     }
-    if menu.EndDate != nil {
-      updateObj = append(updateObj, "end_date=$3")
+    if menu.EndDate != nil {        updateObj = append(updateObj, fmt.Sprintf("end_date=$%d",len(values)+1))
       values = append(values, *menu.StartDate)
     }
     

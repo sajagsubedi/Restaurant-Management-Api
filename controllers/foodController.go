@@ -113,18 +113,16 @@ func CreateFood() gin.HandlerFunc {
       var updateObj []string
       var values []interface {}
 
-      if food.Name != nil {
-        updateObj = append(updateObj, "name=$1")
+      if food.Name != nil {        updateObj = append(updateObj, fmt.Sprintf("name=$%d",len(values)+1))
         values = append(values, *food.Name)
       }
 
       if food.Price != nil {
-        updateObj = append(updateObj, "price=$2")
+        updateObj = append(updateObj, fmt.Sprintf("price=$%d",len(values)+1))
         values = append(values, *food.Price)
       }
 
-      if food.Food_image != nil {
-        updateObj = append(updateObj, "food_image=$3")
+      if food.Food_image != nil {        updateObj = append(updateObj, fmt.Sprintf("food_image=$%d",len(values)+1))
         values = append(values, *food.Food_image)
       }
       values = append(values, foodId)
