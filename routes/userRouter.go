@@ -1,16 +1,24 @@
-package routes 
+package routes
 
-import(
-    "github.com/gin-gonic/gin"
-    controller "github.com/sajagsubedi/Restaurant-Management-Api/controllers"
-    "github.com/sajagsubedi/Restaurant-Management-Api/middlewares"
+import (
+	"github.com/gin-gonic/gin"
+	controller "github.com/sajagsubedi/Restaurant-Management-Api/controllers"
+	"github.com/sajagsubedi/Restaurant-Management-Api/middlewares"
 )
 
 func UserRoutes(incomingRoutes *gin.Engine) {
-  userRoutes:=incomingRoutes.Group("/api/v1/users")
-  userRoutes.GET("/", controller.GetUsers())
-  userRoutes.GET("/:userid", controller.GetUser())
-  userRoutes.POST("/signup", controller.Signup())
-  userRoutes.POST("/signin", controller.Login())
-  userRoutes.PATCH("/update",controller.UpdateProfile()).Use(middlewares.CheckUser())
+	userRoutes := incomingRoutes.Group("/api/v1/users")
+
+	userRoutes.POST("/signup", controller.Signup())
+	userRoutes.POST("/signin", controller.Signin())
+	authRoutes:=userRoutes.Group("")
+	authRoutes.Use(middlewares.CheckAdmin())
+	authRoutes.GET("/profile", middlewares.CheckUser(), controller.GetUser())
+	authRoutes.PATCH("/updateprofile", middlewares.CheckUser(), controller.UpdateProfile())
+
+	adminRoutes := userRoutes.Group("")
+	adminRoutes.Use(middlewares.CheckAdmin())
+  adminRoutes.GET("", controller.GetUsers())
+	adminRoutes.GET("/:userid", middlewares.CheckAdminAndSetUser(), controller.GetUser())
+	adminRoutes.PATCH("/update/:userid", middlewares.CheckAdminAndSetUser(), controller.UpdateProfile())
 }

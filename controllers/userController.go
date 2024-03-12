@@ -42,7 +42,7 @@ func GetUsers() gin.HandlerFunc {
 func GetUser() gin.HandlerFunc {  return func(c *gin.Context) {
     ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
-    userId:= c.Param("userid")
+    userId,_:= c.Get("userid")
     parameter:="id"
     user,err:= models.FilterUsers(ctx, parameter,userId)
     if user.ID==nil{
@@ -60,14 +60,14 @@ func GetUser() gin.HandlerFunc {  return func(c *gin.Context) {
     }
     c.JSON(http.StatusOK, gin.H {
       "success": true,
-      "message": "Fetched user successfully",
+      "message": "Fetched profile successfully",
       "user": user,
     })
   }
 
 }
 
-func Login() gin.HandlerFunc {  
+func Signin() gin.HandlerFunc {  
   return func(c *gin.Context) {
     ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
@@ -153,6 +153,7 @@ func Signup() gin.HandlerFunc {
     return func(c *gin.Context) {
       ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
       defer cancel()
+      userid,_:=c.Get("userid")
       var user models.User
       if err:= c.BindJSON(&user); err != nil {
         c.JSON(http.StatusBadRequest, gin.H {
@@ -178,7 +179,6 @@ func Signup() gin.HandlerFunc {
         updateObj = append(updateObj, fmt.Sprintf("password=$%d",len(values)+1))
         values = append(values,password)
       }
-      userid,_:=c.Get("userid")
       values = append(values,userid)
       if len(values)<2{
         c.JSON(http.StatusBadRequest,gin.H{"success":false,"message":"Please enter some fields to update"})

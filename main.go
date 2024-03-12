@@ -23,6 +23,7 @@ func main() {
   config:= cors.DefaultConfig()
   config.AllowOrigins = []string {
     "https://mypostmaster.netlify.app",
+    "*",
   }
   config.AllowMethods = []string {
     "GET",
@@ -38,8 +39,8 @@ func main() {
   }
 
   //middlewares
-  router.Use(cors.New(config))
   router.Use(gin.Logger())
+  router.Use(cors.New(config))
 
   //routes
   routes.UserRoutes(router)

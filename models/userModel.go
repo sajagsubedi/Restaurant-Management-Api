@@ -16,7 +16,7 @@ type User struct {
 	Password   *string    `json:"password" validate:"required,min=6"`
 	Email      *string    `json:"email" validate:"email,required"`
 	Phone     *string     `json:"phone"`
-  UserType      *string    `json:"user_type" validate:"eq=admin|eq=user"`
+  UserType  *string    `json:"user_type"`
 	CreatedAt  time.Time  `json:"created_at"`
 	UpdatedAt  time.Time  `json:"updated_at"`
 }
@@ -32,7 +32,7 @@ func GetUsersDb(ctx context.Context) ([]User, error) {
   }
   for rows.Next() {
     var user User
-    err = rows.Scan(&user.ID,&user.First_name,&user.Last_name,&user.Password,&user.Email,&user.Phone,&user.CreatedAt,&user.UpdatedAt)
+    err = rows.Scan(&user.ID,&user.First_name,&user.Last_name,&user.Password,&user.Email,&user.Phone,&user.UserType,&user.CreatedAt,&user.UpdatedAt)
     if err != nil {
       log.Fatalf("Unable to scan row %v", err)
     }
@@ -45,12 +45,12 @@ func GetUsersDb(ctx context.Context) ([]User, error) {
 func AddUser(ctx context.Context,user User)(User,error){
    db:= database.CreateConnection()
   defer db.Close()
-  userType:="user"
+  userType:="admin"
   sqlStatement:= `INSERT INTO users (first_name, last_name, password, email, phone,user_type,created_at, updated_at)
     VALUES ($1, $2, $3, $4, $5,$6, NOW(), NOW()) 
     RETURNING *;`
     var createdUser User 
-    err:=db.QueryRowContext(ctx, sqlStatement, user.First_name, user.Last_name, user.Password, user.Email, user.Phone).Scan(&createdUser.ID,&createdUser.First_name,&createdUser.Last_name,&createdUser.Password,&createdUser.Email,&createdUser.Phone,userType,&createdUser.CreatedAt,&createdUser.UpdatedAt)
+    err:=db.QueryRowContext(ctx, sqlStatement, user.First_name, user.Last_name, user.Password, user.Email, user.Phone,userType).Scan(&createdUser.ID,&createdUser.First_name,&createdUser.Last_name,&createdUser.Password,&createdUser.Email,&createdUser.Phone,&createdUser.UserType,&createdUser.CreatedAt,&createdUser.UpdatedAt)
     if err != nil {
     log.Fatalf("Unable to execute query %v", err)
   }
@@ -74,7 +74,7 @@ func CountUser(parameter string, value *string)(int,error){
     defer db.Close()
     var foundUser User
    sqlStatement:=fmt.Sprintf("SELECT * FROM users WHERE %s=$1;",parameter)
-   err:=db.QueryRowContext(ctx,sqlStatement,value).Scan(&foundUser.ID, &foundUser.First_name, &foundUser.Last_name, &foundUser.Password, &foundUser.Email, &foundUser.Phone, &foundUser.CreatedAt,&foundUser.UpdatedAt)
+   err:=db.QueryRowContext(ctx,sqlStatement,value).Scan(&foundUser.ID, &foundUser.First_name, &foundUser.Last_name, &foundUser.Password, &foundUser.Email, &foundUser.Phone, &foundUser.UserType,&foundUser.CreatedAt,&foundUser.UpdatedAt)
    if err!=nil{
     if err == sql.ErrNoRows {
       return User{},nil 
