@@ -37,6 +37,7 @@ func GetTablesDb(ctx context.Context) ([]Table, error) {
   return tables,
   err
 }
+
 func GetTableById(ctx context.Context, id string) (Table, error) {
   db:= database.CreateConnection()
   defer db.Close()
@@ -54,4 +55,19 @@ func GetTableById(ctx context.Context, id string) (Table, error) {
   }
   return foundTable,
   nil
+}
+
+func CreateTableDb(ctx context.Context, createTable Table)(Table, error) {
+  db:= database.CreateConnection()
+  defer db.Close()
+  sqlStatement:= `INSERT INTO tables (guests, tablenumber, created_at, updated_at)
+		VALUES ($1, $2, NOW(), NOW())
+		RETURNING *;`
+  var createdTable Table
+  err:= db.QueryRowContext(ctx, sqlStatement, createTable.Guests, createTable.TableNumber).Scan(&createdTable.ID, &createdTable.Guests, &createdTable.TableNumber, &createdTable.CreatedAt, &createdTable.UpdatedAt)
+  if err != nil {
+    log.Fatalf("Unable to execute query %v", err)
+  }
+  return createdTable,
+  err
 }

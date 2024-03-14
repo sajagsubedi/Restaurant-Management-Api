@@ -55,6 +55,7 @@ func CreateFoodDB(ctx context.Context, createFood Food)(Food, error) {
   return createdFood,
   err
 }
+
 func GetFoodById(ctx context.Context, id string) (Food, error) {
   db:= database.CreateConnection()
   defer db.Close()
