@@ -6,8 +6,10 @@ import (
 )
 
 func TableRoutes(incomingRoutes *gin.Engine) {
-	incomingRoutes.GET("/tables", controller.GetTables())
-	incomingRoutes.GET("/tables/:tableid", controller.GetTable())
-	incomingRoutes.POST("/tables/add", controller.CreateTable())
-	incomingRoutes.PATCH("/tables/update/:tableid", controller.UpdateTable())
+  tableRoutes:=incomingRoutes.Group("/api/v1/tables")
+  
+	tableRoutes.GET("/", controller.GetTables())
+	tableRoutes.GET("/:tableid", controller.GetTable())
+	tableRoutes.POST("/add", controller.CreateTable())
+	tableRoutes.PATCH("/update/:tableid", controller.UpdateTable())
 }

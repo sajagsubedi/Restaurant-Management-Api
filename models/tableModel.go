@@ -2,8 +2,10 @@ package models
 
 import (
   "log"
+  "fmt"
   "time"
   "context"
+  "database/sql"
   database "github.com/sajagsubedi/Restaurant-Management-Api/database"
   )
   type Table struct {
@@ -34,4 +36,22 @@ func GetTablesDb(ctx context.Context) ([]Table, error) {
   }
   return tables,
   err
+}
+func GetTableById(ctx context.Context, id string) (Table, error) {
+  db:= database.CreateConnection()
+  defer db.Close()
+  var foundTable Table
+  sqlStatement:= `SELECT * FROM tables WHERE id=$1`
+  err:= db.QueryRowContext(ctx, sqlStatement, id).Scan(&foundTable.ID, &foundTable.Guests, &foundTable.TableNumber, &foundTable.CreatedAt, &foundTable.UpdatedAt) 
+  if err !=nil{
+    if err == sql.ErrNoRows {
+      return Table {},
+      fmt.Errorf("Table with id %s not found", id)
+    }
+
+    return Table {},
+    fmt.Errorf("error executing query: %w", err)
+  }
+  return foundTable,
+  nil
 }

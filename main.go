@@ -49,6 +49,7 @@ func main() {
   routes.OrderRoutes(router)
   routes.OrderItemRoutes(router)
   routes.InvoiceRoutes(router)
+  routes.TableRoutes(router)
 
   router.Run(":"+port)
 }

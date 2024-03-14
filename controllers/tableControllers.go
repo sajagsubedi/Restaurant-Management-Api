@@ -34,12 +34,24 @@ func GetTables() gin.HandlerFunc {
 
 }
 
-func GetTable() gin.HandlerFunc {
-  return func(c *gin.Context) { 
-    c.JSON(http.StatusOK,gin.H{
-      "message": "Get table by id",
+func GetTable() gin.HandlerFunc {  return func(c *gin.Context) {
+    ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    tableId:= c.Param("tableid")
+    table,err:= models.GetTableById(ctx, tableId)
+    if err != nil {
+      c.JSON(http.StatusInternalServerError, gin.H {
+        "success":false,"message": err.Error(),
+      })
+      return
+    }
+    c.JSON(http.StatusOK, gin.H {
+      "success": true,
+      "message": "Fetched table successfully",
+      "table": table,
     })
   }
+
 }
 
 func CreateTable() gin.HandlerFunc {
