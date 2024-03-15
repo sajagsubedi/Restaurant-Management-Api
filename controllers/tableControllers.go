@@ -1,7 +1,9 @@
 package controllers
 
 import(
+  "fmt"
   "time"
+  "strings"
   "context"
   "net/http"
   "github.com/gin-gonic/gin"
@@ -85,10 +87,46 @@ func CreateTable() gin.HandlerFunc {  return func(c *gin.Context) {
 
 }
 
-func UpdateTable() gin.HandlerFunc {
-  return func(c *gin.Context) { 
-    c.JSON(http.StatusOK,gin.H{
-      "message": "update table",
-    })
-  }
+func UpdateTable() gin.HandlerFunc {    return func(c *gin.Context) {
+      ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+      defer cancel()
+
+      var table models.Table
+
+      tableId:= c.Param("tableid")
+
+      if err:= c.BindJSON(&table); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H {
+          "success":false,"message": err.Error()})
+        return
+      }
+
+      var updateObj []string
+      var values []interface {}
+
+      if table.Guests != nil {        updateObj = append(updateObj, fmt.Sprintf("guests=$%d",len(values)+1))
+        values = append(values, *table.Guests)
+      }
+
+      if table.TableNumber != nil {
+        updateObj = append(updateObj, fmt.Sprintf("tablenumber=$%d",len(values)+1))
+        values = append(values, *table.TableNumber)
+      }
+
+      values = append(values, tableId)
+
+      setVal:= strings.Join(updateObj, ", ")
+
+      err:= models.UpdateTableDb(ctx, setVal, values)
+      if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H {
+          "success":false,"message": err.Error()})
+        return
+      }
+
+      c.JSON(http.StatusOK, gin.H {
+        "success": true, "message": "Table  updated successfully",
+      })
+    }
+
 }

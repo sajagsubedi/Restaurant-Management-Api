@@ -71,3 +71,20 @@ func CreateTableDb(ctx context.Context, createTable Table)(Table, error) {
   return createdTable,
   err
 }
+
+func UpdateTableDb(ctx context.Context, setVal string, values []interface {}) error {
+  db:= database.CreateConnection()
+  defer db.Close()
+  query:= fmt.Sprintf("UPDATE tables SET %s, updated_at=NOW() WHERE id=$%d", setVal, len(values))
+  _,
+  err:= db.ExecContext(ctx, query, values...)
+  if err != nil { 
+    if err == sql.ErrNoRows {
+      return fmt.Errorf("Table with id %s not found", values[len(values)-1])
+    }
+
+    return fmt.Errorf("Error while executing query: %w", err)
+  }
+
+  return err
+}
