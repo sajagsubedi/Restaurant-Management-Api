@@ -39,6 +39,7 @@ func GetOrdersDb(ctx context.Context) ([]Order, error) {
   return orders,
   err
 }
+
 func GetOrderById(ctx context.Context, orderid string) (Order, error) {
     db := database.CreateConnection()
     defer db.Close()

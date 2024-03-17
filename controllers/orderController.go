@@ -46,8 +46,7 @@ func GetOrder() gin.HandlerFunc {  return func(c *gin.Context) {
       })
       return
     }
-    /*orderItems,
-    err:= models.GetOrderItemsByOrderId(ctx, orderId)
+   orderItems,err:= models.GetOrderItemsByOrderId(ctx, orderId)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
       "success":false,
@@ -58,7 +57,7 @@ func GetOrder() gin.HandlerFunc {  return func(c *gin.Context) {
     if orderItems == nil {
       c.JSON(http.StatusOK, gin.H {
         "success": true, "message": "Fetched order successfully", "orderInfo": orderInfo, "orderItems": [0]models.OrderItem {},})
-    }*/
+    }
     c.JSON(http.StatusOK, gin.H {
       "success": true, "message": "Fetched order successfully", "orderInfo": orderInfo,
     })
