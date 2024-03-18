@@ -54,3 +54,18 @@ func GetOrderById(ctx context.Context, orderid string) (Order, error) {
     }
     return foundOrder, nil
 }
+
+func CreateOrderDb(ctx context.Context,newOrder Order)(Order, error) {
+  db:= database.CreateConnection()
+  defer db.Close()
+  sqlStatement:= `INSERT INTO orders (order_date, created_at, updated_at,table_id,user_id) 
+		VALUES ($1, NOW(), NOW(),$2,$3) 
+		RETURNING *;`
+  var createdOrder Order
+  err:= db.QueryRowContext(ctx,sqlStatement, newOrder.OrderDate, newOrder.TableId, newOrder.UserId).Scan(&createdOrder.ID, &createdOrder.OrderDate, &createdOrder.CreatedAt, &createdOrder.UpdatedAt, &createdOrder.TableId,&createdOrder.UserId)
+  if err != nil {
+    log.Fatalf("Unable to execute query %v", err)
+  }
+  return createdOrder,
+  err
+}

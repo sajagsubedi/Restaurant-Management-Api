@@ -65,12 +65,37 @@ func GetOrder() gin.HandlerFunc {  return func(c *gin.Context) {
 
 }
 
-func CreateOrder() gin.HandlerFunc {
-  return func(c *gin.Context) { 
-    c.JSON(http.StatusOK,gin.H{
-      "message": "create orders",
+func CreateOrder() gin.HandlerFunc {  return func(c *gin.Context) {
+    ctx,
+    cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    var order models.Order
+    if err:= c.BindJSON(&order); err != nil {
+      c.JSON(http.StatusBadRequest, gin.H {
+        "success":false,"message": err.Error()})
+      return
+    }
+    validationErr:= validate.Struct(order)
+    if validationErr != nil {
+      c.JSON(http.StatusBadRequest, gin.H {
+        "success":false,"message": validationErr.Error(),})
+      return
+    }
+    createdOrder,
+    err:= models.CreateOrderDb(ctx, order)
+    if err != nil {
+      c.JSON(http.StatusInternalServerError, gin.H {
+        "success": false, "message": "Failed to add order",
+      })
+      return
+    }
+    c.JSON(http.StatusCreated, gin.H {
+      "success": true,
+      "message": "Created order successfully!",
+      "order": createdOrder,
     })
   }
+
 }
 
 func UpdateOrder() gin.HandlerFunc {
