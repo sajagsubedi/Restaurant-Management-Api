@@ -1,7 +1,10 @@
 package controllers
 
 import(
+  "fmt"
   "time"
+  "strings"
+  "strconv"
   "context"
   "net/http"
   "github.com/gin-gonic/gin"
@@ -81,8 +84,13 @@ func CreateOrder() gin.HandlerFunc {  return func(c *gin.Context) {
         "success":false,"message": validationErr.Error(),})
       return
     }
-    createdOrder,
-    err:= models.CreateOrderDb(ctx, order)
+    _,err:=models.GetTableById(ctx,strconv.FormatInt(*order.TableId,10))
+    if err!=nil{
+    c.JSON(http.StatusBadRequest, gin.H {
+        "success":false,"message": err.Error(),})
+    return
+    }
+    createdOrder,err:= models.CreateOrderDb(ctx, order)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
         "success": false, "message": "Failed to add order",
@@ -98,10 +106,49 @@ func CreateOrder() gin.HandlerFunc {  return func(c *gin.Context) {
 
 }
 
-func UpdateOrder() gin.HandlerFunc {
-  return func(c *gin.Context) { 
-    c.JSON(http.StatusOK,gin.H{
-      "message": "update orders",
+func UpdateOrder() gin.HandlerFunc {  return func(c *gin.Context) {
+    ctx,
+    cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+
+    var order models.Order
+
+    orderId:= c.Param("orderid")
+
+    if err:= c.BindJSON(&order); err != nil {
+      c.JSON(http.StatusBadRequest, gin.H {
+        "success":false,"message": err.Error(),})
+      return
+    }
+
+    var updateObj []string
+    var values []interface {}
+
+    if order.TableId != nil {
+    _,err:=models.GetTableById(ctx,strconv.FormatInt(*order.TableId,10))
+    if err!=nil{
+    c.JSON(http.StatusBadRequest, gin.H {
+        "success":false,"message": err.Error(),})
+    return
+    }
+  updateObj = append(updateObj, fmt.Sprintf("table_id=$%d",len(values)+1))
+      values = append(values, *order.TableId)
+    }
+
+    values = append(values, orderId)
+
+    setVal:= strings.Join(updateObj, ", ")
+
+    err:= models.UpdateOrderDb(ctx, setVal, values)
+    if err != nil {
+      c.JSON(http.StatusInternalServerError, gin.H {
+        "success":false,"message": err.Error(),})
+      return
+    }
+
+    c.JSON(http.StatusOK, gin.H {
+      "success": true, "message": "Order updated successfully",
     })
   }
+
 }
