@@ -1,9 +1,11 @@
 package models
 
 import (
+  "fmt"
   "log"
 	"time"
 	"context"
+	"database/sql"
 	database "github.com/sajagsubedi/Restaurant-Management-Api/database"
 )
 
@@ -60,4 +62,23 @@ func GetOrderItemsByOrderId(ctx context.Context,orderid string) ([]OrderItem, er
   }
   return orderitems,
   err
+}
+func GetOrderItemById(ctx context.Context, id string) (OrderItem, error) {
+  db:= database.CreateConnection()
+  defer db.Close()
+  var orderitem OrderItem
+  sqlStatement:= `SELECT * FROM orderitems WHERE id=$1`
+  err:= db.QueryRowContext(ctx, sqlStatement, id).Scan(&orderitem.ID,&orderitem.Quantity,&orderitem.Unit_price,&orderitem.CreatedAt,&orderitem.UpdatedAt,&orderitem.Food_id,&orderitem.Order_id)
+
+  if err != nil {
+    if err == sql.ErrNoRows {
+      return OrderItem {},
+      fmt.Errorf("Order Item with id %s not found", id)
+    }
+
+    return OrderItem {},
+    fmt.Errorf("error executing the query: %w", err)
+  }
+  return orderitem,
+  nil
 }
