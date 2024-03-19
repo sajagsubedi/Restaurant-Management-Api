@@ -3,6 +3,7 @@ package controllers
 import(
   "fmt"
   "time"
+  "strings"
   "strconv"
   "context"
   "net/http"
@@ -119,10 +120,43 @@ func CreateOrderItem() gin.HandlerFunc {  return func(c *gin.Context) {
 
 }
 
-func UpdateOrderItem() gin.HandlerFunc {
-  return func(c *gin.Context) {
+func UpdateOrderItem() gin.HandlerFunc {  return func(c *gin.Context) {
+    ctx,
+    cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+
+    var orderitem models.OrderItem
+
+    orderItemId:= c.Param("orderitemid")
+
+    if err:= c.BindJSON(&orderitem); err != nil {
+      c.JSON(http.StatusBadRequest, gin.H {
+        "success":false,"message": err.Error(),})
+      return
+    }
+
+    var updateObj []string
+    var values []interface {}
+
+    if orderitem.Quantity != nil {
+    updateObj = append(updateObj, fmt.Sprintf("quantity=$%d",len(values)+1))
+      values = append(values, *orderitem.Quantity)
+    }
+
+    values = append(values, orderItemId)
+
+    setVal:= strings.Join(updateObj, ", ")
+
+    err:= models.UpdateOrderItemDb(ctx, setVal, values)
+    if err != nil {
+      c.JSON(http.StatusInternalServerError, gin.H {
+        "success":false,"message": err.Error(),})
+      return
+    }
+
     c.JSON(http.StatusOK, gin.H {
-      "message": "update orderitem",
+      "success": true, "message": "OrderItem updated successfully",
     })
   }
+
 }

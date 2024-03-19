@@ -106,7 +106,8 @@ func CreateOrder() gin.HandlerFunc {  return func(c *gin.Context) {
 
 }
 
-func UpdateOrder() gin.HandlerFunc {  return func(c *gin.Context) {
+func UpdateOrder() gin.HandlerFunc {  
+  return func(c *gin.Context) {
     ctx,
     cancel:= context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
@@ -150,5 +151,4 @@ func UpdateOrder() gin.HandlerFunc {  return func(c *gin.Context) {
       "success": true, "message": "Order updated successfully",
     })
   }
-
 }
