@@ -6,7 +6,7 @@ import (
 )
 
 func OrderItemRoutes(incomingRoutes *gin.Engine) {
-  orderItemRoutes:=incomingRoutes.Group("")
+  orderItemRoutes:=incomingRoutes.Group("/api/v1/orderitems")
 	orderItemRoutes.GET("/", controller.GetOrderItems())
 	orderItemRoutes.GET("/:orderitemId", controller.GetOrderItem())
 	orderItemRoutes.GET("/order/:orderid", controller.GetOrderItemsByOrder())

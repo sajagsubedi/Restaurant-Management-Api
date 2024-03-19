@@ -17,6 +17,29 @@ type OrderItem struct {
 	Order_id      *int64             `json:"order_id" validate:"required"`
 }
 
+func GetOrderItemsDb(ctx context.Context) ([]OrderItem, error) {
+  db:= database.CreateConnection()
+  defer db.Close()
+  var orderitems []OrderItem
+  sqlStatement:= `SELECT * FROM orderitems`
+  rows,
+  err:= db.QueryContext(ctx, sqlStatement)
+  if err != nil {
+    log.Fatalf("Unable to execute sql statement %v", err)
+  }
+  for rows.Next() {
+    var orderitem OrderItem   
+    err = rows.Scan(&orderitem.ID,&orderitem.Quantity,&orderitem.Unit_price,&orderitem.CreatedAt,&orderitem.UpdatedAt,&orderitem.Food_id,&orderitem.Order_id)
+
+    if err != nil {
+      log.Fatalf("Unable to scan row %v", err)
+    }
+    orderitems = append(orderitems, orderitem)
+  }
+  return orderitems,
+  err
+}
+
 func GetOrderItemsByOrderId(ctx context.Context,orderid string) ([]OrderItem, error) {
   db:= database.CreateConnection()
   defer db.Close()
