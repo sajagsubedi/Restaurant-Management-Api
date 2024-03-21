@@ -1,7 +1,9 @@
 package models
 
 import (
+  "fmt"
   "log"
+  "database/sql"
 	"time"
   "context"
   database "github.com/sajagsubedi/Restaurant-Management-Api/database"
@@ -37,4 +39,22 @@ func GetInvoicesDb(ctx context.Context) ([]Invoice, error) {
   }
   return invoices,
   err
+}
+func GetInvoiceById(ctx context.Context, id string) (Invoice, error) {
+  db:= database.CreateConnection()
+  defer db.Close()
+  var foundInvoice Invoice
+  sqlStatement:= `SELECT * FROM invoices WHERE id=$1`
+  err:= db.QueryRowContext(ctx, sqlStatement, id).Scan(&foundInvoice.ID,&foundInvoice.Order_id,&foundInvoice.Payment_method,&foundInvoice.Payment_status,&foundInvoice.CreatedAt,&foundInvoice.UpdatedAt)
+  if err != nil {
+    if err == sql.ErrNoRows {
+      return Invoice{},
+      fmt.Errorf("Invoice with id %s not found", id)
+    }
+
+    return Invoice {},
+    fmt.Errorf("Error executing query: %w", err)
+  }
+  return foundInvoice,
+  nil
 }

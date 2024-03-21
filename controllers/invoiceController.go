@@ -34,12 +34,24 @@ func GetInvoices() gin.HandlerFunc {  return func(c *gin.Context) {
 
 }
 
-func GetInvoice() gin.HandlerFunc {
-  return func(c *gin.Context) { 
-    c.JSON(http.StatusOK,gin.H{
-      "message": "Get invoice by id",
+func GetInvoice() gin.HandlerFunc {  return func(c *gin.Context) {
+    ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    invoiceId:= c.Param("invoiceid")
+    invoice,err:= models.GetInvoiceById(ctx, invoiceId)
+    if err != nil {
+      c.JSON(http.StatusInternalServerError, gin.H {
+        "success":false,"message": err.Error(),
+      })
+      return
+    }
+    c.JSON(http.StatusOK, gin.H {
+      "success": true,
+      "message": "Fetched invoice successfully",
+      "invoice": invoice,
     })
   }
+
 }
 
 func CreateInvoice() gin.HandlerFunc {
