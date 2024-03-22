@@ -1,6 +1,7 @@
 package controllers
 
 import(
+  "fmt"
   "time"
   "context"
   "net/http"
@@ -54,12 +55,43 @@ func GetInvoice() gin.HandlerFunc {  return func(c *gin.Context) {
 
 }
 
-func CreateInvoice() gin.HandlerFunc {
-  return func(c *gin.Context) { 
-    c.JSON(http.StatusOK,gin.H{
-      "message": "Create invoice",
-    })
-  }
+func CreateInvoice() gin.HandlerFunc {  return func(c *gin.Context) {
+    ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    var invoice models.Invoice
+    if err:= c.BindJSON(&invoice); err != nil {
+      c.JSON(http.StatusBadRequest, gin.H {
+        "success":false,"message": err.Error()})
+      return
+    }
+    validationErr:= validate.Struct(invoice)
+    if validationErr != nil {
+      c.JSON(http.StatusBadRequest, gin.H {
+        "success":false,"message": validationErr.Error()})
+      return
+    }
+    _, err:= models.GetOrderById(ctx, 
+      fmt.Sprintf("%d", *invoice.Order_id))
+      if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H {
+          "success": false, "message": err.Error(),
+        })
+        return
+      }
+      createdInvoice,err:= models.CreateInvoiceDB(ctx, invoice)
+      if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H {
+          "success": false, "message": "Failed to add invoice",
+        })
+        return
+      }
+      c.JSON(http.StatusCreated, gin.H {
+        "success": true,
+        "message": "Created invoice successfully!",
+        "invoice": createdInvoice,
+      })
+    }
+
 }
 
 func UpdateInvoice() gin.HandlerFunc {

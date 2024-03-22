@@ -14,7 +14,7 @@ type Invoice struct {
 	Order_id         *int64             `json:"order_id"`
 	Payment_method   *string            `json:"payment_method" validate:"eq=CARD|eq=CASH"`
 	Payment_status   *string            `json:"payment_status" validate:"required,eq=PENDING|eq=PAID"`
-	Payment_due_date time.Time          `json:"Payment_due_date"`
+	Payment_due_date time.Time          `json:"payment_due_date"`
 	CreatedAt       time.Time          `json:"created_at"`
 	UpdatedAt       time.Time          `json:"updated_at"`
 }
@@ -40,6 +40,7 @@ func GetInvoicesDb(ctx context.Context) ([]Invoice, error) {
   return invoices,
   err
 }
+
 func GetInvoiceById(ctx context.Context, id string) (Invoice, error) {
   db:= database.CreateConnection()
   defer db.Close()
@@ -57,4 +58,19 @@ func GetInvoiceById(ctx context.Context, id string) (Invoice, error) {
   }
   return foundInvoice,
   nil
+}
+
+func CreateInvoiceDB(ctx context.Context,newInvoice Invoice)(Invoice, error) {
+  db:= database.CreateConnection()
+  defer db.Close()
+  sqlStatement:= `INSERT INTO invoices (order_id,payment_method, payment_status,payment_due_date, created_at, updated_at) 
+		VALUES ($1,$2,$3,NOW(), NOW(), NOW()) 
+		RETURNING *;`
+  var createdInvoice Invoice
+  err:= db.QueryRowContext(ctx,sqlStatement,newInvoice.Order_id,newInvoice.Payment_method,newInvoice.Payment_status).Scan(&createdInvoice.ID,&createdInvoice.Order_id,&createdInvoice.Payment_method,&createdInvoice.Payment_status,&createdInvoice.CreatedAt,&createdInvoice.UpdatedAt)
+  if err != nil {
+    log.Fatalf("Unable to execute query %v", err)
+  }
+  return createdInvoice,
+  err
 }
