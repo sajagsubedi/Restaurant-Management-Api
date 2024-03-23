@@ -12,8 +12,8 @@ import (
 type Invoice struct {
 	ID               *int64 `json:"id"`
 	Order_id         *int64             `json:"order_id"`
-	Payment_method   *string            `json:"payment_method" validate:"eq=CARD|eq=CASH"`
-	Payment_status   *string            `json:"payment_status" validate:"required,eq=PENDING|eq=PAID"`
+	Payment_method   *string            `json:"payment_method" validate:"eq=card|eq=cash"`
+	Payment_status   *string            `json:"payment_status" validate:"required,eq=pending|eq=paid"`
 	Payment_due_date time.Time          `json:"payment_due_date"`
 	CreatedAt       time.Time          `json:"created_at"`
 	UpdatedAt       time.Time          `json:"updated_at"`
@@ -31,7 +31,7 @@ func GetInvoicesDb(ctx context.Context) ([]Invoice, error) {
   }
   for rows.Next() {
     var invoice Invoice
-    err = rows.Scan(&invoice.ID,&invoice.Order_id,&invoice.Payment_method,&invoice.Payment_status,&invoice.CreatedAt,&invoice.UpdatedAt)
+    err = rows.Scan(&invoice.ID,&invoice.Order_id,&invoice.Payment_method,&invoice.Payment_status,&invoice.Payment_due_date,&invoice.CreatedAt,&invoice.UpdatedAt)
     if err != nil {
       log.Fatalf("Unable to scan row %v", err)
     }
@@ -46,7 +46,7 @@ func GetInvoiceById(ctx context.Context, id string) (Invoice, error) {
   defer db.Close()
   var foundInvoice Invoice
   sqlStatement:= `SELECT * FROM invoices WHERE id=$1`
-  err:= db.QueryRowContext(ctx, sqlStatement, id).Scan(&foundInvoice.ID,&foundInvoice.Order_id,&foundInvoice.Payment_method,&foundInvoice.Payment_status,&foundInvoice.CreatedAt,&foundInvoice.UpdatedAt)
+  err:= db.QueryRowContext(ctx, sqlStatement, id).Scan(&foundInvoice.ID,&foundInvoice.Order_id,&foundInvoice.Payment_method,&foundInvoice.Payment_status,&foundInvoice.Payment_due_date,&foundInvoice.CreatedAt,&foundInvoice.UpdatedAt)
   if err != nil {
     if err == sql.ErrNoRows {
       return Invoice{},
@@ -67,10 +67,27 @@ func CreateInvoiceDB(ctx context.Context,newInvoice Invoice)(Invoice, error) {
 		VALUES ($1,$2,$3,NOW(), NOW(), NOW()) 
 		RETURNING *;`
   var createdInvoice Invoice
-  err:= db.QueryRowContext(ctx,sqlStatement,newInvoice.Order_id,newInvoice.Payment_method,newInvoice.Payment_status).Scan(&createdInvoice.ID,&createdInvoice.Order_id,&createdInvoice.Payment_method,&createdInvoice.Payment_status,&createdInvoice.CreatedAt,&createdInvoice.UpdatedAt)
+  err:= db.QueryRowContext(ctx,sqlStatement,newInvoice.Order_id,newInvoice.Payment_method,newInvoice.Payment_status).Scan(&createdInvoice.ID,&createdInvoice.Order_id,&createdInvoice.Payment_method,&createdInvoice.Payment_status,&createdInvoice.Payment_due_date,&createdInvoice.CreatedAt,&createdInvoice.UpdatedAt)
   if err != nil {
     log.Fatalf("Unable to execute query %v", err)
   }
   return createdInvoice,
   err
+}
+
+func UpdateInvoiceDb(ctx context.Context, setVal string, values []interface {}) error {
+  db:= database.CreateConnection()
+  defer db.Close()
+  query:= fmt.Sprintf("UPDATE invoices SET %s, updated_at=NOW() WHERE id=$%d", setVal, len(values))
+  _,
+  err:= db.ExecContext(ctx, query, values...)
+  if err != nil { 
+    if err == sql.ErrNoRows {
+      return fmt.Errorf("Invoice with id %s not found", values[len(values)-1])
+    }
+
+    return fmt.Errorf("Error while executing query: %w", err)
+  }
+
+  return err
 }

@@ -3,6 +3,7 @@ package controllers
 import(
   "fmt"
   "time"
+  "strings"
   "context"
   "net/http"
   "github.com/gin-gonic/gin"
@@ -95,5 +96,47 @@ func CreateInvoice() gin.HandlerFunc {  return func(c *gin.Context) {
 }
 
 func UpdateInvoice() gin.HandlerFunc {
-  return func(c *gin.Context) {}
+    return func(c *gin.Context) {
+      ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+      defer cancel()
+
+      var invoice models.Invoice
+
+      invoiceId:= c.Param("invoiceid")
+
+      if err:= c.BindJSON(&invoice); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H {
+          "success":false,"message": err.Error()})
+        return
+      }
+
+      var updateObj []string
+      var values []interface {}
+
+      if invoice.Payment_method != nil {
+        updateObj = append(updateObj, fmt.Sprintf("payment_method=$%d",len(values)+1))
+        values = append(values, *invoice.Payment_method)
+      }
+
+      if invoice.Payment_status != nil {
+        updateObj = append(updateObj, fmt.Sprintf("payment_status=$%d",len(values)+1))
+        values = append(values, *invoice.Payment_status)
+      }
+
+     
+      values = append(values, invoiceId)
+
+      setVal:= strings.Join(updateObj, ", ")
+
+      err:= models.UpdateInvoiceDb(ctx, setVal, values)
+      if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H {
+          "success":false,"message": err.Error()})
+        return
+      }
+
+      c.JSON(http.StatusOK, gin.H {
+        "success": true, "message": "Invoice updated successfully",
+      })
+    }
 }
