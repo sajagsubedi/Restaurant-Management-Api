@@ -12,22 +12,29 @@ import(
 
 func GetMenus() gin.HandlerFunc {
   return func(c *gin.Context) {
-    ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    ctx,
+    cancel:= context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
 
-    menus,err:= models.GetMenusDb(ctx)
+    menus,
+    err:= models.GetMenusDb(ctx)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
-        "success":false,"message": "failed to fetch menus",
+        "success": false, "message": "failed to fetch menus",
       })
     }
     if menus == nil {
       c.JSON(http.StatusOK, gin.H {
+        "success": true,
+        "message": "Fetch menus successfully",
         "menus": [0]models.Menu {},
       })
       return
     }
     c.JSON(http.StatusOK, gin.H {
+      "success": true,
+      "message": "Fetch menus successfully",
+
       "menus": menus,
     })
   }
@@ -43,6 +50,7 @@ func GetMenu() gin.HandlerFunc {
     err:= models.GetMenuById(ctx, menuId)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
+        "success": false,
         "message": err.Error(),
       })
       return
@@ -51,13 +59,15 @@ func GetMenu() gin.HandlerFunc {
     err:= models.GetFoodByMenuId(ctx, menuId)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
+        "success": false,
         "message": err.Error(),
       })
       return
     }
     if foods == nil {
       c.JSON(http.StatusOK, gin.H {
-        "success": true, "message": "Fetched menu", "menuInfo": menuInfo, "foods": [0]models.Food {},})
+        "success": true, "message": "Fetched menu", "menuInfo": menuInfo, "foods": [0]models.Food {},
+      })
     }
     c.JSON(http.StatusOK, gin.H {
       "success": true, "message": "Fetched menu", "menuInfo": menuInfo, "foods": foods,
@@ -73,13 +83,14 @@ func CreateMenu() gin.HandlerFunc {
     var menu models.Menu
     if err:= c.BindJSON(&menu); err != nil {
       c.JSON(http.StatusBadRequest, gin.H {
-        "success":false,"message": err.Error()})
+        "success": false, "message": err.Error()})
       return
     }
     validationErr:= validate.Struct(menu)
     if validationErr != nil {
       c.JSON(http.StatusBadRequest, gin.H {
-        "success":false,"message": validationErr.Error(),})
+        "success": false, "message": validationErr.Error(),
+      })
       return
     }
     createdMenu,
@@ -111,7 +122,8 @@ func UpdateMenu() gin.HandlerFunc {
 
     if err:= c.BindJSON(&menu); err != nil {
       c.JSON(http.StatusBadRequest, gin.H {
-        "success":false,"message": err.Error(),})
+        "success": false, "message": err.Error(),
+      })
       return
     }
 
@@ -119,23 +131,26 @@ func UpdateMenu() gin.HandlerFunc {
     var values []interface {}
 
     if menu.Name != nil {
-        updateObj = append(updateObj, fmt.Sprintf("name=$%d",len(values)+1))
+      updateObj = append(updateObj, fmt.Sprintf("name=$%d", len(values)+1))
       values = append(values, *menu.Name)
     }
 
-    if menu.Category != nil {        updateObj = append(updateObj, fmt.Sprintf("category=$%d",len(values)+1))
+    if menu.Category != nil {
+      updateObj = append(updateObj, fmt.Sprintf("category=$%d", len(values)+1))
 
       values = append(values, *menu.Category)
     }
 
-    if menu.StartDate != nil {        updateObj = append(updateObj, fmt.Sprintf("start_date=$%d",len(values)+1))
+    if menu.StartDate != nil {
+      updateObj = append(updateObj, fmt.Sprintf("start_date=$%d", len(values)+1))
 
       values = append(values, *menu.StartDate)
     }
-    if menu.EndDate != nil {        updateObj = append(updateObj, fmt.Sprintf("end_date=$%d",len(values)+1))
+    if menu.EndDate != nil {
+      updateObj = append(updateObj, fmt.Sprintf("end_date=$%d", len(values)+1))
       values = append(values, *menu.StartDate)
     }
-    
+
     values = append(values, menuId)
 
     setVal:= strings.Join(updateObj, ", ")
@@ -143,7 +158,8 @@ func UpdateMenu() gin.HandlerFunc {
     err:= models.UpdateMenuDb(ctx, setVal, values)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
-        "success":false,"message": err.Error(),})
+        "success": false, "message": err.Error(),
+      })
       return
     }
 

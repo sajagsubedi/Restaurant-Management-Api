@@ -10,13 +10,13 @@ import(
 )
 
 type Food struct {
-  ID *int64 `json:"id"`
-  Name *string `json:"name" validate:"required,min=2,max=100"`
-  Price *float64 `json:"price" validate:"required"`
+  ID         *int64 `json:"id"`
+  Name       *string `json:"name" validate:"required,min=2,max=100"`
+  Price      *float64 `json:"price" validate:"required"`
   Food_image *string `json:"food_image"`
-  MenuId *int64 `json:"menuid"`
-  CreatedAt time.Time `json:"created_at"`
-  UpdatedAt time.Time `json:"updated_at"`
+  MenuId     *int64 `json:"menuid"`
+  CreatedAt   time.Time `json:"created_at"`
+  UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func GetFoodsDb(ctx context.Context) ([]Food, error) {

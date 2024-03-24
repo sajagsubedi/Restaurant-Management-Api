@@ -11,18 +11,23 @@ import(
   "github.com/sajagsubedi/Restaurant-Management-Api/models"
 )
 
-func GetOrders() gin.HandlerFunc {  return func(c *gin.Context) {
-    ctx,cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+func GetOrders() gin.HandlerFunc {
+  return func(c *gin.Context) {
+    ctx,
+    cancel:= context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
 
-    orders,err:= models.GetOrdersDb(ctx)
+    orders,
+    err:= models.GetOrdersDb(ctx)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
-        "success":false,"message": "Failed to fetch orders",
+        "success": false, "message": "Failed to fetch orders",
       })
     }
     if orders == nil {
       c.JSON(http.StatusOK, gin.H {
+        "success": true,
+        "message": "Fetch orders successfully",
         "orders": [0]models.Order {},
       })
       return
@@ -36,30 +41,34 @@ func GetOrders() gin.HandlerFunc {  return func(c *gin.Context) {
 
 }
 
-func GetOrder() gin.HandlerFunc {  return func(c *gin.Context) {
+func GetOrder() gin.HandlerFunc {
+  return func(c *gin.Context) {
     ctx,
     cancel:= context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
     orderId:= c.Param("orderid")
-    orderInfo,err:= models.GetOrderById(ctx, orderId)
+    orderInfo,
+    err:= models.GetOrderById(ctx, orderId)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
-        "success":false,
+        "success": false,
         "message": err.Error(),
       })
       return
     }
-   orderItems,err:= models.GetOrderItemsByOrderId(ctx, orderId)
+    orderItems,
+    err:= models.GetOrderItemsByOrderId(ctx, orderId)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
-      "success":false,
+        "success": false,
         "message": err.Error(),
       })
       return
     }
     if orderItems == nil {
       c.JSON(http.StatusOK, gin.H {
-        "success": true, "message": "Fetched order successfully", "orderInfo": orderInfo, "orderItems": [0]models.OrderItem {},})
+        "success": true, "message": "Fetched order successfully", "orderInfo": orderInfo, "orderItems": [0]models.OrderItem {},
+      })
     }
     c.JSON(http.StatusOK, gin.H {
       "success": true, "message": "Fetched order successfully", "orderInfo": orderInfo,
@@ -68,29 +77,34 @@ func GetOrder() gin.HandlerFunc {  return func(c *gin.Context) {
 
 }
 
-func CreateOrder() gin.HandlerFunc {  return func(c *gin.Context) {
+func CreateOrder() gin.HandlerFunc {
+  return func(c *gin.Context) {
     ctx,
     cancel:= context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
     var order models.Order
     if err:= c.BindJSON(&order); err != nil {
       c.JSON(http.StatusBadRequest, gin.H {
-        "success":false,"message": err.Error()})
+        "success": false, "message": err.Error()})
       return
     }
     validationErr:= validate.Struct(order)
     if validationErr != nil {
       c.JSON(http.StatusBadRequest, gin.H {
-        "success":false,"message": validationErr.Error(),})
+        "success": false, "message": validationErr.Error(),
+      })
       return
     }
-    _,err:=models.GetTableById(ctx,strconv.FormatInt(*order.TableId,10))
-    if err!=nil{
-    c.JSON(http.StatusBadRequest, gin.H {
-        "success":false,"message": err.Error(),})
-    return
+    _,
+    err:= models.GetTableById(ctx, strconv.FormatInt(*order.TableId, 10))
+    if err != nil {
+      c.JSON(http.StatusBadRequest, gin.H {
+        "success": false, "message": err.Error(),
+      })
+      return
     }
-    createdOrder,err:= models.CreateOrderDb(ctx, order)
+    createdOrder,
+    err:= models.CreateOrderDb(ctx, order)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
         "success": false, "message": "Failed to add order",
@@ -106,7 +120,7 @@ func CreateOrder() gin.HandlerFunc {  return func(c *gin.Context) {
 
 }
 
-func UpdateOrder() gin.HandlerFunc {  
+func UpdateOrder() gin.HandlerFunc {
   return func(c *gin.Context) {
     ctx,
     cancel:= context.WithTimeout(context.Background(), 10*time.Second)
@@ -118,7 +132,8 @@ func UpdateOrder() gin.HandlerFunc {
 
     if err:= c.BindJSON(&order); err != nil {
       c.JSON(http.StatusBadRequest, gin.H {
-        "success":false,"message": err.Error(),})
+        "success": false, "message": err.Error(),
+      })
       return
     }
 
@@ -126,13 +141,15 @@ func UpdateOrder() gin.HandlerFunc {
     var values []interface {}
 
     if order.TableId != nil {
-    _,err:=models.GetTableById(ctx,strconv.FormatInt(*order.TableId,10))
-    if err!=nil{
-    c.JSON(http.StatusBadRequest, gin.H {
-        "success":false,"message": err.Error(),})
-    return
-    }
-  updateObj = append(updateObj, fmt.Sprintf("table_id=$%d",len(values)+1))
+      _,
+      err:= models.GetTableById(ctx, strconv.FormatInt(*order.TableId, 10))
+      if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H {
+          "success": false, "message": err.Error(),
+        })
+        return
+      }
+      updateObj = append(updateObj, fmt.Sprintf("table_id=$%d", len(values)+1))
       values = append(values, *order.TableId)
     }
 
@@ -143,7 +160,8 @@ func UpdateOrder() gin.HandlerFunc {
     err:= models.UpdateOrderDb(ctx, setVal, values)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
-        "success":false,"message": err.Error(),})
+        "success": false, "message": err.Error(),
+      })
       return
     }
 
