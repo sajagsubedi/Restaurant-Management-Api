@@ -95,6 +95,8 @@ func CreateOrder() gin.HandlerFunc {
       })
       return
     }
+    userid, _ := c.Get("userid")
+    order.UserId=userid.(*int64)
     _,
     err:= models.GetTableById(ctx, strconv.FormatInt(*order.TableId, 10))
     if err != nil {

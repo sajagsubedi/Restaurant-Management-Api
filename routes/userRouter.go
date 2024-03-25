@@ -2,8 +2,8 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	controller "github.com/sajagsubedi/Restaurant-Management-Api/controllers"
 	"github.com/sajagsubedi/Restaurant-Management-Api/middlewares"
+	controller "github.com/sajagsubedi/Restaurant-Management-Api/controllers"
 )
 
 func UserRoutes(incomingRoutes *gin.Engine) {
@@ -11,6 +11,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 
 	userRoutes.POST("/signup", controller.Signup())
 	userRoutes.POST("/signin", controller.Signin())
+	
 	authRoutes:=userRoutes.Group("")
 	authRoutes.Use(middlewares.CheckAdmin())
 	authRoutes.GET("/profile", middlewares.CheckUser(), controller.GetUser())

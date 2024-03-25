@@ -1,14 +1,18 @@
 package routes
 
 import (
-  controller "github.com/sajagsubedi/Restaurant-Management-Api/controllers"
   "github.com/gin-gonic/gin"
+  "github.com/sajagsubedi/Restaurant-Management-Api/middlewares"
+   controller "github.com/sajagsubedi/Restaurant-Management-Api/controllers"
 )
 
 func MenuRoutes(incomingRoutes *gin.Engine) {
   menuRoutes:=incomingRoutes.Group("/api/v1/menus")
   menuRoutes.GET("", controller.GetMenus())
   menuRoutes.GET("/:menuid", controller.GetMenu())
-  menuRoutes.POST("/add", controller.CreateMenu())
-  menuRoutes.PATCH("/update/:menuid", controller.UpdateMenu())
+  
+	adminRoutes := menuRoutes.Group("")
+  adminRoutes.Use(middlewares.CheckAdmin())
+  adminRoutes.POST("/add", controller.CreateMenu())
+  adminRoutes.PATCH("/update/:menuid", controller.UpdateMenu())
 }
