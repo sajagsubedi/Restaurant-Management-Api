@@ -73,7 +73,7 @@ func CreateOrderDb(ctx context.Context,newOrder Order)(Order, error) {
 func UpdateOrderDb(ctx context.Context, setVal string, values []interface {}) error {
   db:= database.CreateConnection()
   defer db.Close()
-  query:= fmt.Sprintf("UPDATE orders SET %s, updated_at=NOW() WHERE id=$%d", setVal, len(values))
+  query:= fmt.Sprintf("UPDATE orders SET %s, updated_at=NOW() WHERE id=$%d AND user_id=$%d", setVal, len(values)-1,len(values))
   _,
   err:= db.ExecContext(ctx, query, values...)
   if err != nil { 

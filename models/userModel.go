@@ -45,7 +45,7 @@ func GetUsersDb(ctx context.Context) ([]User, error) {
 func AddUser(ctx context.Context,user User)(User,error){
    db:= database.CreateConnection()
   defer db.Close()
-  userType:="admin"
+  userType:="user"
   sqlStatement:= `INSERT INTO users (first_name, last_name, password, email, phone,user_type,created_at, updated_at)
     VALUES ($1, $2, $3, $4, $5,$6, NOW(), NOW()) 
     RETURNING *;`

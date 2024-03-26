@@ -9,28 +9,31 @@ import(
 )
 type SignedDetails struct {
 	Userid        *int64
-	Email         *string
-	First_name    *string
-	Last_name     *string
 	UserType      *string
+	TokenType      string
 	jwt.StandardClaims
 }
 var SECRET_KEY string = os.Getenv("SECRET_KEY")
 
-func GenerateAllTokens(userDetails models.User)(string,string,error){
+func GenerateAllTokens(userDetails models.User)(string,string,int64,int64,error){
+  tokenType:="accesstoken"
+  accessTokenExpiration:=time.Now().Local().Add(time.Hour * time.Duration(6)).Unix()
   claims:=&SignedDetails{
     Userid: userDetails.ID,
-    Email: userDetails.Email,
-    First_name: userDetails.First_name,
-    Last_name: userDetails.Last_name,
     UserType:userDetails.UserType,
+    TokenType:tokenType,
     StandardClaims:jwt.StandardClaims{
-      ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(5)).Unix(),
+      ExpiresAt:accessTokenExpiration,
     },
   }
+  tokenType="refreshtoken"
+  refreshTokenExpiration:= time.Now().Local().Add(time.Hour * time.Duration(168)).Unix()
   refreshClaims := &SignedDetails{
+     Userid: userDetails.ID,
+    UserType:userDetails.UserType,
+    TokenType:tokenType,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(168)).Unix(),
+			ExpiresAt:refreshTokenExpiration,
 		},
 	}
 
@@ -41,7 +44,7 @@ func GenerateAllTokens(userDetails models.User)(string,string,error){
 		log.Panic(err)
 	}
 
-	return accessToken, refreshToken, err
+	return accessToken, refreshToken,accessTokenExpiration,refreshTokenExpiration, err
 }
 
 func ValidateToken(signedToken string) (*SignedDetails,error) {

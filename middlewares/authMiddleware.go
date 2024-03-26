@@ -1,8 +1,8 @@
 package middlewares
 
 import (
+  "strings"
 	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/sajagsubedi/Restaurant-Management-Api/helpers"
 )
@@ -13,13 +13,23 @@ func DecodeJwt(c *gin.Context) (*helpers.SignedDetails, int, string) {
 		msg := "No Authorization header provided"
 		return nil, http.StatusUnauthorized, msg
 	}
-
+if strings.HasPrefix(authToken, "Bearer ") {
+    authToken=strings.TrimPrefix(authToken, "Bearer ")
+    }else{
+    msg :="Invalid authentication format. Include 'Bearer' prefix"
+		return nil, http.StatusUnauthorized, msg
+    }
 	claims, err := helpers.ValidateToken(authToken)
+	
 	if err != nil {
 		msg := "Please provide correct authorization header!"
 		return nil, http.StatusUnauthorized, msg
 	}
-
+	
+  if claims.TokenType !="accesstoken"{
+    msg:="Please use access token to access resources!"
+    return nil,http.StatusUnauthorized,msg
+  }
 	return claims, 0, ""
 }
 
@@ -34,9 +44,6 @@ func CheckUser() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("email", *claims.Email)
-		c.Set("first_name", *claims.First_name)
-		c.Set("last_name", *claims.Last_name)
 		c.Set("userid", *claims.Userid)
 		c.Set("usertype", *claims.UserType)
 		c.Next()

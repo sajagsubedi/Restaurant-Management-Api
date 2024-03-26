@@ -107,9 +107,15 @@ func Signin() gin.HandlerFunc {
 			})
 			return
 		}
-		accessToken, refreshToken, _ := helpers.GenerateAllTokens(foundUser)
+		accessToken, refreshToken,accessTokenExpiration,refreshTokenExpiration, _ := helpers.GenerateAllTokens(foundUser)
 		c.JSON(http.StatusOK, gin.H{
-			"success": true, "message": "Signed in successfully!", "access_token": accessToken, "refresh_token": refreshToken,
+			"success": true,
+			"message": "Signed in successfully!",
+			"access_token": accessToken, 
+			"access_token_expiration":accessTokenExpiration,
+			"refresh_token": refreshToken,
+			"refresh_token_expiration":refreshTokenExpiration,
+			"user_type":foundUser.UserType,
 		})
 	}
 }
@@ -168,8 +174,9 @@ func Signup() gin.HandlerFunc {
 				"success": false, "message": "Internal Server Error occurred!. Try again later",
 			})
 			return
-		}
-		accessToken, refreshToken, err := helpers.GenerateAllTokens(insertedUser)
+		}	
+		accessToken, refreshToken,accessTokenExpiration,refreshTokenExpiration, _ := helpers.GenerateAllTokens(insertedUser)
+
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false, "message": "Internal Server Error occurred!. Try again later",
@@ -178,7 +185,13 @@ func Signup() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"success": true, "message": "New account created Successfully!", "access_token": accessToken, "refresh_token": refreshToken,
+			"success": true,
+			"message": "New account created Successfully!",
+			"access_token": accessToken,
+			"access_token_expiration":accessTokenExpiration,
+			"refresh_token": refreshToken,
+			"refresh_token_expiration":refreshTokenExpiration,
+			  "user_type":insertedUser.UserType,
 		})
 	}
 }

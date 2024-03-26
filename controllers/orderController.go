@@ -131,7 +131,7 @@ func UpdateOrder() gin.HandlerFunc {
     var order models.Order
 
     orderId:= c.Param("orderid")
-
+    userid, _ := c.Get("userid")
     if err:= c.BindJSON(&order); err != nil {
       c.JSON(http.StatusBadRequest, gin.H {
         "success": false, "message": err.Error(),
@@ -156,6 +156,7 @@ func UpdateOrder() gin.HandlerFunc {
     }
 
     values = append(values, orderId)
+    values = append(values, userid)
 
     setVal:= strings.Join(updateObj, ", ")
 
