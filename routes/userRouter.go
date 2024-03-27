@@ -11,12 +11,12 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 
 	userRoutes.POST("/signup", controller.Signup())
 	userRoutes.POST("/signin", controller.Signin())
+	userRoutes.POST("/getaccesstoken",middlewares.ValidateRefreshToken() ,controller.GetAccessToken())
 	
 	authRoutes:=userRoutes.Group("")
-	authRoutes.Use(middlewares.CheckAdmin())
+	authRoutes.Use(middlewares.CheckUser())
 	authRoutes.GET("/profile", middlewares.CheckUser(), controller.GetUser())
 	authRoutes.PATCH("/updateprofile", middlewares.CheckUser(), controller.UpdateProfile())
-
 	adminRoutes := userRoutes.Group("")
 	adminRoutes.Use(middlewares.CheckAdmin())
   adminRoutes.GET("", controller.GetUsers())

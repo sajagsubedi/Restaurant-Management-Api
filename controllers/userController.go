@@ -107,7 +107,7 @@ func Signin() gin.HandlerFunc {
 			})
 			return
 		}
-		accessToken, refreshToken,accessTokenExpiration,refreshTokenExpiration, _ := helpers.GenerateAllTokens(foundUser)
+		accessToken, refreshToken,accessTokenExpiration,refreshTokenExpiration, _ := helpers.GenerateAllTokens(*foundUser.ID,*foundUser.UserType)
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"message": "Signed in successfully!",
@@ -175,7 +175,7 @@ func Signup() gin.HandlerFunc {
 			})
 			return
 		}	
-		accessToken, refreshToken,accessTokenExpiration,refreshTokenExpiration, _ := helpers.GenerateAllTokens(insertedUser)
+		accessToken, refreshToken,accessTokenExpiration,refreshTokenExpiration, _ := helpers.GenerateAllTokens(*insertedUser.ID,*insertedUser.UserType)
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -250,6 +250,20 @@ func UpdateProfile() gin.HandlerFunc {
 	}
 }
 
+func GetAccessToken() gin.HandlerFunc{
+  return func (c *gin.Context){
+    userid,_:=c.Get("userid")
+    usertype,_:=c.Get("usertype")
+   accessToken, _,accessTokenExpiration,_, _ := helpers.GenerateAllTokens(userid.(int64),usertype.(string))
+  c.JSON(http.StatusOK,gin.H{
+    "success":true,
+    "message":"Refetched access token successfully!",
+    "access_token":accessToken,
+    "access_token_expiration":accessTokenExpiration,
+  })
+  }
+}
+
 func HashPassword(password string) string {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	if err != nil {
@@ -266,3 +280,4 @@ func VerifyPassword(userPassword string, providedPassword string) bool {
 	}
 	return true
 }
+

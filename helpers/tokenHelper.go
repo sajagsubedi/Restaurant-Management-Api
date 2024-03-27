@@ -5,22 +5,21 @@ import(
   "os"
   "time"
   jwt "github.com/dgrijalva/jwt-go"
-  "github.com/sajagsubedi/Restaurant-Management-Api/models"
 )
 type SignedDetails struct {
-	Userid        *int64
-	UserType      *string
-	TokenType      string
+	Userid        int64
+	UserType      string
+	TokenType     string
 	jwt.StandardClaims
 }
 var SECRET_KEY string = os.Getenv("SECRET_KEY")
 
-func GenerateAllTokens(userDetails models.User)(string,string,int64,int64,error){
+func GenerateAllTokens(userId int64,userType string)(string,string,int64,int64,error){
   tokenType:="accesstoken"
   accessTokenExpiration:=time.Now().Local().Add(time.Hour * time.Duration(6)).Unix()
   claims:=&SignedDetails{
-    Userid: userDetails.ID,
-    UserType:userDetails.UserType,
+    Userid: userId,
+    UserType:userType,
     TokenType:tokenType,
     StandardClaims:jwt.StandardClaims{
       ExpiresAt:accessTokenExpiration,
@@ -29,8 +28,8 @@ func GenerateAllTokens(userDetails models.User)(string,string,int64,int64,error)
   tokenType="refreshtoken"
   refreshTokenExpiration:= time.Now().Local().Add(time.Hour * time.Duration(168)).Unix()
   refreshClaims := &SignedDetails{
-     Userid: userDetails.ID,
-    UserType:userDetails.UserType,
+     Userid: userId,
+    UserType:userType,
     TokenType:tokenType,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt:refreshTokenExpiration,
