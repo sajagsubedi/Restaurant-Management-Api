@@ -10,12 +10,13 @@ database "github.com/sajagsubedi/Restaurant-Management-Api/database"
 )
 
 type Order struct {
-	ID           *int64             `json:"id"`
-	OrderDate    time.Time          `json:"order_date" validate:"required"`
-	CreatedAt    time.Time          `json:"created_at"`
-	UpdatedAt    time.Time          `json:"updated_at"`
-	TableId     *int64            `json:"table_id" validate:"required"`
-	UserId      *int64            `json:"user_id" validate:"required"`
+	ID            *int64             `json:"id"`
+	OrderDate     time.Time          `json:"order_date" validate:"required"`
+	Peoples       *int64              `json:number_of_people`
+	CreatedAt     time.Time          `json:"created_at"`
+	UpdatedAt     time.Time          `json:"updated_at"`
+	TableNumber   *int64            `json:"table_number" validate:"required"`
+	UserId        *int64            `json:"user_id" validate:"required"`
 }
 
 func GetOrdersDb(ctx context.Context) ([]Order, error) {
@@ -30,7 +31,7 @@ func GetOrdersDb(ctx context.Context) ([]Order, error) {
   }
   for rows.Next() {
     var order Order
-    err = rows.Scan(&order.ID, &order.OrderDate, &order.CreatedAt, &order.UpdatedAt, &order.TableId, &order.UserId)
+    err = rows.Scan(&order.ID, &order.OrderDate, &order.Peoples,&order.CreatedAt, &order.UpdatedAt, &order.TableNumber, &order.UserId)
     if err != nil {
       log.Fatalf("Unable to scan row %v", err)
     }
@@ -45,7 +46,7 @@ func GetOrderById(ctx context.Context, orderid string) (Order, error) {
     defer db.Close()
     var foundOrder Order
     sqlStatement := `SELECT * FROM orders WHERE id=$1`
-    err := db.QueryRowContext(ctx, sqlStatement, orderid).Scan(&foundOrder.ID, &foundOrder.OrderDate, &foundOrder.CreatedAt, &foundOrder.UpdatedAt, &foundOrder.TableId, &foundOrder.UserId)
+    err := db.QueryRowContext(ctx, sqlStatement, orderid).Scan(&foundOrder.ID, &foundOrder.OrderDate, &foundOrder.Peoples,&foundOrder.CreatedAt, &foundOrder.UpdatedAt, &foundOrder.TableNumber, &foundOrder.UserId)
     if err != nil {
         if err == sql.ErrNoRows {
             return Order{}, fmt.Errorf("Order with id %s not found", orderid)
@@ -58,11 +59,11 @@ func GetOrderById(ctx context.Context, orderid string) (Order, error) {
 func CreateOrderDb(ctx context.Context,newOrder Order)(Order, error) {
   db:= database.CreateConnection()
   defer db.Close()
-  sqlStatement:= `INSERT INTO orders (order_date, created_at, updated_at,table_id,user_id) 
-		VALUES ($1, NOW(), NOW(),$2,$3) 
+  sqlStatement:= `INSERT INTO orders (order_date, number_of_people,created_at, updated_at,table_number,user_id) 
+		VALUES ($1, $2,NOW(), NOW(),$3,$5) 
 		RETURNING *;`
   var createdOrder Order
-  err:= db.QueryRowContext(ctx,sqlStatement, newOrder.OrderDate, newOrder.TableId, newOrder.UserId).Scan(&createdOrder.ID, &createdOrder.OrderDate, &createdOrder.CreatedAt, &createdOrder.UpdatedAt, &createdOrder.TableId,&createdOrder.UserId)
+  err:= db.QueryRowContext(ctx,sqlStatement, newOrder.OrderDate,newOrder.Peoples, newOrder.TableNumber, newOrder.UserId).Scan(&createdOrder.ID, &createdOrder.OrderDate, &createdOrder.Peoples,&createdOrder.CreatedAt, &createdOrder.UpdatedAt, &createdOrder.TableNumber,&createdOrder.UserId)
   if err != nil {
     log.Fatalf("Unable to execute query %v", err)
   }

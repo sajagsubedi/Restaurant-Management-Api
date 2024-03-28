@@ -4,7 +4,6 @@ import(
   "fmt"
   "time"
   "strings"
-  "strconv"
   "context"
   "net/http"
   "github.com/gin-gonic/gin"
@@ -97,14 +96,6 @@ func CreateOrder() gin.HandlerFunc {
     }
     userid, _ := c.Get("userid")
     order.UserId=userid.(*int64)
-    _,
-    err:= models.GetTableById(ctx, strconv.FormatInt(*order.TableId, 10))
-    if err != nil {
-      c.JSON(http.StatusBadRequest, gin.H {
-        "success": false, "message": err.Error(),
-      })
-      return
-    }
     createdOrder,
     err:= models.CreateOrderDb(ctx, order)
     if err != nil {
@@ -142,19 +133,17 @@ func UpdateOrder() gin.HandlerFunc {
     var updateObj []string
     var values []interface {}
 
-    if order.TableId != nil {
-      _,
-      err:= models.GetTableById(ctx, strconv.FormatInt(*order.TableId, 10))
-      if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H {
-          "success": false, "message": err.Error(),
-        })
-        return
-      }
-      updateObj = append(updateObj, fmt.Sprintf("table_id=$%d", len(values)+1))
-      values = append(values, *order.TableId)
+    if order.TableNumber != nil {
+      updateObj = append(updateObj, fmt.Sprintf("table_number=$%d", len(values)+1))
+      values = append(values, *order.TableNumber)
     }
-
+    
+    if order.Peoples != nil {
+      updateObj = append(updateObj, fmt.Sprintf("no_of_people=$%d", len(values)+1))
+      values = append(values, *order.Peoples)
+    }
+    
+    
     values = append(values, orderId)
     values = append(values, userid)
 
