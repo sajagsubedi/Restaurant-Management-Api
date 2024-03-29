@@ -96,23 +96,20 @@ func CreateOrderItem() gin.HandlerFunc {
 
     }
 
-    if _,
-    err:= models.GetOrderById(ctx, fmt.Sprintf("%d", *orderitem.Order_id)); err != nil {
+     order,err:= models.GetOrderById(ctx, fmt.Sprintf("%d", *orderitem.Order_id))
+      if err != nil {
       c.JSON(http.StatusBadRequest, gin.H {
         "success": false, "message": err.Error()})
       return
-
     }
-
-    _,
-    err:= models.GetOrderById(ctx,
-      fmt.Sprintf("%d", *orderitem.Order_id))
-    if err != nil {
-      c.JSON(http.StatusBadRequest, gin.H {
-        "success": false, "message": err.Error(),
-      })
-      return
-    }
+     userid,_:=c.Get("userid")
+   if *order.UserId!=userid.(int64){
+     c.JSON(http.StatusUnauthorized,gin.H{
+       "success":false,
+       "message":"You are not authorized to add orderitem in the order wth given id! ",
+     })
+     return
+   }
     createdOrderItem,
     err:= models.CreateOrderItemDB(ctx, orderitem)
     if err != nil {
@@ -127,7 +124,6 @@ func CreateOrderItem() gin.HandlerFunc {
       "orderitem": createdOrderItem,
     })
   }
-
 }
 
 func UpdateOrderItem() gin.HandlerFunc {
@@ -139,27 +135,58 @@ func UpdateOrderItem() gin.HandlerFunc {
     var orderitem models.OrderItem
 
     orderItemId:= c.Param("orderitemid")
-
+    userid, _ := c.Get("userid")
+        
     if err:= c.BindJSON(&orderitem); err != nil {
       c.JSON(http.StatusBadRequest, gin.H {
         "success": false, "message": err.Error(),
       })
       return
     }
-
+    
+    foundorderItem,err:=models.GetOrderItemById(ctx,orderItemId)
+    if err != nil {
+      c.JSON(http.StatusInternalServerError, gin.H {
+        "success": false,
+        "message": err.Error(),
+      })
+      return
+    }
+    
+    order,_:=models.GetOrderById(ctx, strconv.FormatInt(*foundorderItem.Order_id,10))
+    
+    if *order.UserId!=userid.(int64){
+      c.JSON(http.StatusUnauthorized,gin.H{
+        "success":false,
+        "message":"You are no authorized to update the orderitem!",
+      })
+      return
+    }
     var updateObj []string
     var values []interface {}
-
+    
     if orderitem.Quantity != nil {
+      if *foundorderItem.Status !="Not_Started"{
+        c.JSON(http.StatusBadRequest,gin.H{
+          "success":false,
+          "message":"Sorry, You can't update the quantity since the cooking of food has already been started or been fulfilled!",
+        })
+        return
+      }
       updateObj = append(updateObj, fmt.Sprintf("quantity=$%d", len(values)+1))
       values = append(values, *orderitem.Quantity)
+    }
+    
+    if orderitem.Status != nil {
+      updateObj = append(updateObj, fmt.Sprintf("status=$%d", len(values)+1))
+      values = append(values, *orderitem.Status)
     }
 
     values = append(values, orderItemId)
 
     setVal:= strings.Join(updateObj, ", ")
 
-    err:= models.UpdateOrderItemDb(ctx, setVal, values)
+    err= models.UpdateOrderItemDb(ctx, setVal, values)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H {
         "success": false, "message": err.Error(),
@@ -171,5 +198,4 @@ func UpdateOrderItem() gin.HandlerFunc {
       "success": true, "message": "OrderItem updated successfully",
     })
   }
-
 }

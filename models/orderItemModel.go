@@ -10,12 +10,13 @@ import (
 )
 
 type OrderItem struct {
-	ID            *int64 `json:"id"`
-	Quantity      *int64            `json:"quantity" validate:"required"`
+	ID           *int64           `json:"id"`
+	Quantity     *int64            `json:"quantity" validate:"required"`
+	Status       *string            `json:"status" validate:"required, eq=Not_Started | eq=Cooking | eq=Completed`
 	CreatedAt    time.Time          `json:"created_at"`
 	UpdatedAt    time.Time          `json:"updated_at"`
-	Food_id       *int64            `json:"food_id" validate:"required"`
-	Order_id      *int64             `json:"order_id" validate:"required"`
+	Food_id      *int64            `json:"food_id" validate:"required"`
+	Order_id     *int64             `json:"order_id" validate:"required"`
 }
 
 func GetOrderItemsDb(ctx context.Context) ([]OrderItem, error) {
@@ -30,7 +31,7 @@ func GetOrderItemsDb(ctx context.Context) ([]OrderItem, error) {
   }
   for rows.Next() {
     var orderitem OrderItem   
-    err = rows.Scan(&orderitem.ID,&orderitem.Quantity,&orderitem.CreatedAt,&orderitem.UpdatedAt,&orderitem.Food_id,&orderitem.Order_id)
+    err = rows.Scan(&orderitem.ID,&orderitem.Quantity,&orderitem.Status,&orderitem.CreatedAt,&orderitem.UpdatedAt,&orderitem.Food_id,&orderitem.Order_id)
 
     if err != nil {
       log.Fatalf("Unable to scan row %v", err)
@@ -53,7 +54,7 @@ func GetOrderItemsByOrderId(ctx context.Context,orderid string) ([]OrderItem, er
   }
   for rows.Next() {
     var orderitem OrderItem
-    err = rows.Scan(&orderitem.ID,&orderitem.Quantity,&orderitem.CreatedAt,&orderitem.UpdatedAt,&orderitem.Food_id,&orderitem.Order_id)
+    err = rows.Scan(&orderitem.ID,&orderitem.Quantity,&orderitem.Status,&orderitem.CreatedAt,&orderitem.UpdatedAt,&orderitem.Food_id,&orderitem.Order_id)
     if err != nil {
       log.Fatalf("Unable to scan row %v", err)
     }
@@ -67,7 +68,7 @@ func GetOrderItemById(ctx context.Context, id string) (OrderItem, error) {
   defer db.Close()
   var orderitem OrderItem
   sqlStatement:= `SELECT * FROM orderitems WHERE id=$1`
-  err:= db.QueryRowContext(ctx, sqlStatement, id).Scan(&orderitem.ID,&orderitem.Quantity,&orderitem.CreatedAt,&orderitem.UpdatedAt,&orderitem.Food_id,&orderitem.Order_id)
+  err:= db.QueryRowContext(ctx, sqlStatement, id).Scan(&orderitem.ID,&orderitem.Quantity,&orderitem.Status, &orderitem.CreatedAt,&orderitem.UpdatedAt,&orderitem.Food_id,&orderitem.Order_id)
 
   if err != nil {
     if err == sql.ErrNoRows {
@@ -81,14 +82,16 @@ func GetOrderItemById(ctx context.Context, id string) (OrderItem, error) {
   return orderitem,
   nil
 }
+
 func CreateOrderItemDB(ctx context.Context, newOrderItem OrderItem)(OrderItem, error) {
   db:= database.CreateConnection()
   defer db.Close()
-  sqlStatement:= `INSERT INTO orderitems (quantity, food_id, order_id, created_at,updated_at)
-		VALUES ($1, $2, $3, NOW(), NOW())
+  sqlStatement:= `INSERT INTO orderitems (quantity,status, food_id, order_id, created_at,updated_at)
+		VALUES ($1, $2, $3,$4, NOW(), NOW())
 		RETURNING *;`
+	initialStatus:="Not_Started"
   var createdOrderItem OrderItem
-  err:= db.QueryRowContext(ctx, sqlStatement, newOrderItem.Quantity, newOrderItem.Food_id, newOrderItem.Order_id).Scan(&createdOrderItem.ID,&createdOrderItem.Quantity,&createdOrderItem.CreatedAt,&createdOrderItem.UpdatedAt,&createdOrderItem.Food_id,&createdOrderItem.Order_id)
+  err:= db.QueryRowContext(ctx, sqlStatement, newOrderItem.Quantity,initialStatus, newOrderItem.Food_id, newOrderItem.Order_id).Scan(&createdOrderItem.ID,&createdOrderItem.Quantity,&createdOrderItem.Status,&createdOrderItem.CreatedAt,&createdOrderItem.UpdatedAt,&createdOrderItem.Food_id,&createdOrderItem.Order_id)
   if err != nil {
     log.Fatalf("Unable to execute query %v", err)
   }
