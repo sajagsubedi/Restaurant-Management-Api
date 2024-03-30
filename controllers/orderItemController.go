@@ -199,3 +199,52 @@ func UpdateOrderItem() gin.HandlerFunc {
     })
   }
 }
+
+func DeleteOrderItem() gin.HandlerFunc {
+  return func(c *gin.Context) {
+    ctx,
+    cancel:= context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+
+    orderItemId:= c.Param("orderitemid")
+    userid, _ := c.Get("userid")
+        
+    foundorderItem,err:=models.GetOrderItemById(ctx,orderItemId)
+    if err != nil {
+      c.JSON(http.StatusInternalServerError, gin.H {
+        "success": false,
+        "message": err.Error(),
+      })
+      return
+    }
+    
+    order,_:=models.GetOrderById(ctx, strconv.FormatInt(*foundorderItem.Order_id,10))
+    
+    if *order.UserId!=userid.(int64){
+      c.JSON(http.StatusUnauthorized,gin.H{
+        "success":false,
+        "message":"You are no authorized to update the orderitem!",
+      })
+      return
+    }
+    
+      if *foundorderItem.Status !="Not_Started"{
+        c.JSON(http.StatusBadRequest,gin.H{
+          "success":false,
+          "message":"Sorry, You can't delete orderitem since the cooking of food has already been started or been fulfilled!",
+        })
+        return
+      }
+    err= models.DeleteOrderItemById(ctx, orderItemId)
+    if err != nil {
+      c.JSON(http.StatusInternalServerError, gin.H {
+        "success": false, "message": err.Error(),
+      })
+      return
+    }
+
+    c.JSON(http.StatusOK, gin.H {
+      "success": true, "message": "OrderItem deleted successfully",
+    })
+  }
+}

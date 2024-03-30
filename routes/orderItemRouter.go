@@ -13,6 +13,7 @@ func OrderItemRoutes(incomingRoutes *gin.Engine) {
   
   authRoutes.POST("/create", controller.CreateOrderItem())
 	authRoutes.PATCH("/:orderitemid", controller.UpdateOrderItem())
+	authRoutes.DELETE("/:orderitemid", controller.DeleteOrderItem())
 	
   adminRoutes:=orderItemRoutes.Group("")
 	adminRoutes.Use(middlewares.CheckAdmin())
